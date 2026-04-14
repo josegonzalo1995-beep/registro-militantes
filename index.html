@@ -4,622 +4,840 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Registro de Militantes – El Plan de la Gente</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=Playfair+Display:wght@600;700&display=swap');
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--verde-oscuro:#2D5016;--verde-medio:#1B9E2F;--verde-claro:#3DAF50;--dorado:#D4A843;--dorado-claro:#E8C97A;--bg:#F4F2ED;--card-bg:#FFFFFF;--text-primary:#1A1A1A;--text-secondary:#5C5C5C;--text-muted:#8A8A8A;--border:#E0DDD6;--danger:#C0392B;--success-bg:#E8F5E9;--success-text:#2E7D32;--mc:#2196F3;--fc:#E91E63}
+  html,body{height:100%;overflow-x:hidden}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-primary);min-height:100vh;-webkit-font-smoothing:antialiased}
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  /* ── Nav ── */
+  .nav{background:var(--verde-oscuro);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1100;position:sticky;top:0}
+  .nav::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--verde-oscuro) 33%,var(--dorado) 33% 66%,var(--verde-medio) 66%)}
+  .nav-left{display:flex;align-items:center;gap:10px}
+  .nav-badge{border:1px solid var(--dorado);color:var(--dorado);font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:3px 10px;border-radius:12px;cursor:default;user-select:none}
+  .nav-title{color:#fff;font-size:14px;font-weight:700}
+  .nav-tab{padding:5px 14px;font-family:'DM Sans';font-size:11px;font-weight:600;border:1.5px solid rgba(255,255,255,.2);border-radius:14px;background:transparent;color:rgba(255,255,255,.6);cursor:pointer;display:none}
+  .nav-tab.on{background:var(--dorado);color:var(--verde-oscuro);border-color:var(--dorado)}
 
-  :root {
-    --verde-oscuro: #2D5016;
-    --verde-medio: #1B9E2F;
-    --verde-claro: #3DAF50;
-    --dorado: #D4A843;
-    --dorado-claro: #E8C97A;
-    --bg: #F4F2ED;
-    --card-bg: #FFFFFF;
-    --text-primary: #1A1A1A;
-    --text-secondary: #5C5C5C;
-    --text-muted: #8A8A8A;
-    --border: #E0DDD6;
-    --danger: #C0392B;
-    --success-bg: #E8F5E9;
-    --success-text: #2E7D32;
-  }
+  /* ── Pages ── */
+  .page{display:none}
+  .page.active{display:block}
+  .page-map{display:none;flex-direction:column;height:calc(100vh - 47px)}
+  .page-map.active{display:flex}
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text-primary);
-    min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
-  }
+  /* ── FORM STYLES (from original) ── */
+  .page-wrapper{max-width:520px;margin:0 auto;padding:0 16px 40px}
+  .header{background:var(--verde-oscuro);padding:24px 24px 20px;text-align:center;position:relative;overflow:hidden}
+  .header::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--dorado),var(--dorado-claro),var(--dorado))}
+  .header-badge{display:inline-block;border:1px solid var(--dorado);color:var(--dorado);font-size:10px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;padding:5px 14px;border-radius:20px;margin-bottom:14px}
+  .header h1{font-family:'Playfair Display',serif;color:#FFF;font-size:22px;font-weight:700;line-height:1.3;margin-bottom:6px}
+  .header p{color:rgba(255,255,255,.6);font-size:13px}
+  .stripe-bar{height:6px;background:linear-gradient(90deg,var(--verde-oscuro) 33%,var(--dorado) 33% 66%,var(--verde-medio) 66%)}
+  .form-card{background:var(--card-bg);border-radius:0 0 16px 16px;padding:28px 24px;box-shadow:0 2px 20px rgba(0,0,0,.06)}
+  .form-intro{font-size:13.5px;color:var(--text-secondary);line-height:1.65;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border)}
 
-  .page-wrapper {
-    max-width: 520px;
-    margin: 0 auto;
-    padding: 0 16px 40px;
-  }
+  .field{margin-bottom:20px}
+  .field label{display:block;font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:7px}
+  .field label .req{color:var(--danger);margin-left:2px}
+  .field input[type="text"],.field input[type="number"],.field input[type="tel"]{width:100%;padding:11px 14px;font-family:'DM Sans';font-size:15px;color:var(--text-primary);background:var(--bg);border:1.5px solid var(--border);border-radius:10px;outline:none;transition:border-color .2s,box-shadow .2s}
+  .field input:focus{border-color:var(--verde-medio);box-shadow:0 0 0 3px rgba(27,158,47,.12)}
+  .field input.error{border-color:var(--danger);box-shadow:0 0 0 3px rgba(192,57,43,.1)}
+  .field .error-msg{font-size:12px;color:var(--danger);margin-top:5px;display:none}
+  .field input.error+.error-msg{display:block}
 
-  /* ── Header ── */
-  .header {
-    background: var(--verde-oscuro);
-    padding: 28px 24px 24px;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-  }
-  .header::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--dorado), var(--dorado-claro), var(--dorado));
-  }
-  .header-badge {
-    display: inline-block;
-    border: 1px solid var(--dorado);
-    color: var(--dorado);
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 2.5px;
-    text-transform: uppercase;
-    padding: 5px 14px;
-    border-radius: 20px;
-    margin-bottom: 14px;
-  }
-  .header h1 {
-    font-family: 'Playfair Display', serif;
-    color: #FFFFFF;
-    font-size: 22px;
-    font-weight: 700;
-    line-height: 1.3;
-    margin-bottom: 6px;
-  }
-  .header p {
-    color: rgba(255,255,255,0.6);
-    font-size: 13px;
-    font-weight: 400;
-  }
+  .radio-group{display:flex;flex-direction:column;gap:8px}
+  .radio-option{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:border-color .2s,background .2s}
+  .radio-option:hover{border-color:var(--verde-medio)}
+  .radio-option.selected{border-color:var(--verde-medio);background:rgba(27,158,47,.05)}
+  .radio-option input{display:none}
+  .radio-dot{width:18px;height:18px;border:2px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:border-color .2s}
+  .radio-dot::after{content:'';width:10px;height:10px;border-radius:50%;background:var(--verde-medio);transform:scale(0);transition:transform .2s}
+  .radio-option.selected .radio-dot{border-color:var(--verde-medio)}
+  .radio-option.selected .radio-dot::after{transform:scale(1)}
+  .radio-label{font-size:14px;color:var(--text-primary)}
 
-  /* ── Stripe bar ── */
-  .stripe-bar {
-    height: 6px;
-    background: linear-gradient(90deg, var(--verde-oscuro) 33%, var(--dorado) 33% 66%, var(--verde-medio) 66%);
-  }
+  .geo-section{margin-bottom:20px;padding:16px;background:var(--bg);border-radius:12px;border:1.5px dashed var(--border)}
+  .geo-section.located{border-style:solid;border-color:var(--verde-medio);background:rgba(27,158,47,.04)}
+  .geo-title{font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:4px}
+  .geo-desc{font-size:12.5px;color:var(--text-muted);line-height:1.5;margin-bottom:10px}
+  .geo-tabs{display:flex;gap:6px;margin-bottom:10px}
+  .geo-tab{flex:1;padding:8px;font-family:'DM Sans';font-size:11px;font-weight:600;border:1.5px solid var(--border);border-radius:8px;background:transparent;color:var(--text-muted);cursor:pointer;text-align:center;transition:all .15s}
+  .geo-tab:hover{border-color:var(--verde-medio)}
+  .geo-tab.on{background:var(--verde-oscuro);color:#fff;border-color:var(--verde-oscuro)}
 
-  /* ── Form card ── */
-  .form-card {
-    background: var(--card-bg);
-    border-radius: 0 0 16px 16px;
-    padding: 28px 24px;
-    box-shadow: 0 2px 20px rgba(0,0,0,0.06);
-  }
-  .form-intro {
-    font-size: 13.5px;
-    color: var(--text-secondary);
-    line-height: 1.65;
-    margin-bottom: 24px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--border);
-  }
+  .btn-geo{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;font-family:'DM Sans';font-size:14px;font-weight:600;color:#fff;background:var(--verde-medio);border:none;border-radius:10px;cursor:pointer;transition:background .2s,transform .1s}
+  .btn-geo:hover{background:#179A29}
+  .btn-geo:active{transform:scale(.98)}
+  .btn-geo:disabled{background:var(--text-muted);cursor:not-allowed}
+  .btn-geo svg{width:18px;height:18px}
+  .geo-status{display:none;align-items:center;gap:8px;margin-top:10px;font-size:13px;color:var(--success-text)}
+  .geo-status.visible{display:flex}
+  .geo-status svg{width:14px;height:14px}
+  .geo-coords{font-size:12px;color:var(--text-muted);margin-top:4px;font-family:monospace}
+  #map-container{display:none;margin-top:12px;border-radius:10px;overflow:hidden;border:1.5px solid var(--border)}
+  #map-container.visible{display:block}
+  #map{height:280px;width:100%}
+  .map-hint{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:#fff;font-size:10px;padding:4px 12px;border-radius:12px;z-index:800;pointer-events:none}
 
-  /* ── Fields ── */
-  .field { margin-bottom: 20px; }
-  .field label {
-    display: block;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 7px;
-  }
-  .field label .req { color: var(--danger); margin-left: 2px; }
+  .btn-submit{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;font-family:'DM Sans';font-size:15px;font-weight:700;color:#fff;background:var(--verde-oscuro);border:none;border-radius:12px;cursor:pointer;transition:background .2s,transform .1s;margin-top:8px}
+  .btn-submit:hover{background:#234210}
+  .btn-submit:active{transform:scale(.98)}
+  .btn-submit:disabled{background:var(--text-muted);cursor:not-allowed}
+  .footer-note{text-align:center;font-size:11.5px;color:var(--text-muted);margin-top:20px;line-height:1.5}
 
-  .field input[type="text"],
-  .field input[type="number"],
-  .field input[type="tel"] {
-    width: 100%;
-    padding: 11px 14px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    color: var(--text-primary);
-    background: var(--bg);
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-  .field input:focus {
-    border-color: var(--verde-medio);
-    box-shadow: 0 0 0 3px rgba(27,158,47,0.12);
-  }
-  .field input.error {
-    border-color: var(--danger);
-    box-shadow: 0 0 0 3px rgba(192,57,43,0.1);
-  }
-  .field .error-msg {
-    font-size: 12px;
-    color: var(--danger);
-    margin-top: 5px;
-    display: none;
-  }
-  .field input.error + .error-msg { display: block; }
+  .success-screen{display:none;text-align:center;padding:48px 24px}
+  .success-screen.visible{display:block}
+  .success-icon{width:64px;height:64px;background:var(--success-bg);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:20px}
+  .success-icon svg{width:32px;height:32px;color:var(--success-text)}
+  .success-screen h2{font-family:'Playfair Display',serif;font-size:22px;color:var(--verde-oscuro);margin-bottom:10px}
+  .success-screen p{font-size:14px;color:var(--text-secondary);line-height:1.6}
+  .spinner{width:20px;height:20px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .error-banner{display:none;background:#FDF2F2;border:1px solid #F5C6C6;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--danger);line-height:1.5}
+  .error-banner.visible{display:block}
 
-  /* ── Radio options ── */
-  .radio-group { display: flex; flex-direction: column; gap: 8px; }
-  .radio-option {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    background: var(--bg);
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
-  }
-  .radio-option:hover { border-color: var(--verde-medio); }
-  .radio-option.selected {
-    border-color: var(--verde-medio);
-    background: rgba(27,158,47,0.05);
-  }
-  .radio-option input { display: none; }
-  .radio-dot {
-    width: 18px; height: 18px;
-    border: 2px solid var(--border);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    transition: border-color 0.2s;
-  }
-  .radio-dot::after {
-    content: '';
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    background: var(--verde-medio);
-    transform: scale(0);
-    transition: transform 0.2s;
-  }
-  .radio-option.selected .radio-dot { border-color: var(--verde-medio); }
-  .radio-option.selected .radio-dot::after { transform: scale(1); }
-  .radio-label { font-size: 14px; color: var(--text-primary); }
+  /* ── Community labels on map ── */
+  .com-label{background:transparent!important;border:none!important;box-shadow:none!important;font-family:'DM Sans';font-size:10px;font-weight:600;color:#2D5016;text-shadow:1px 1px 2px rgba(255,255,255,1),-1px -1px 2px rgba(255,255,255,1),0 0 5px rgba(255,255,255,.9),0 0 8px rgba(255,255,255,.7);white-space:nowrap;text-align:center;pointer-events:none;transition:font-size .2s;overflow:visible}
 
-  /* ── Geolocation ── */
-  .geo-section {
-    margin-bottom: 20px;
-    padding: 16px;
-    background: var(--bg);
-    border-radius: 12px;
-    border: 1.5px dashed var(--border);
-  }
-  .geo-section.located {
-    border-style: solid;
-    border-color: var(--verde-medio);
-    background: rgba(27,158,47,0.04);
-  }
-  .geo-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 4px;
-  }
-  .geo-desc {
-    font-size: 12.5px;
-    color: var(--text-muted);
-    line-height: 1.5;
-    margin-bottom: 12px;
-  }
+  /* ── MAP VIEW STYLES ── */
+  .map-lock{display:flex;align-items:center;justify-content:center;flex:1;padding:24px}
+  .lock-card{background:var(--card-bg);border-radius:16px;padding:36px;max-width:340px;width:100%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.06)}
+  .lock-icon{width:56px;height:56px;background:var(--bg);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px}
+  .lock-icon svg{width:24px;height:24px;color:var(--verde-oscuro)}
+  .lock-card h2{font-family:'Playfair Display',serif;font-size:18px;color:var(--verde-oscuro);margin-bottom:6px}
+  .lock-card p{font-size:13px;color:var(--text-muted);margin-bottom:16px}
+  .lock-input{width:100%;padding:10px 14px;font-family:'DM Sans';font-size:14px;border:1.5px solid var(--border);border-radius:10px;text-align:center;outline:none;margin-bottom:10px}
+  .lock-input:focus{border-color:var(--verde-medio);box-shadow:0 0 0 3px rgba(27,158,47,.12)}
+  .lock-btn{width:100%;padding:10px;font-family:'DM Sans';font-size:13px;font-weight:700;color:#fff;background:var(--verde-oscuro);border:none;border-radius:10px;cursor:pointer}
+  .lock-btn:hover{background:#234210}
+  .lock-err{font-size:12px;color:var(--danger);margin-top:8px;display:none}
 
-  .btn-geo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-    padding: 12px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    color: #fff;
-    background: var(--verde-medio);
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: background 0.2s, transform 0.1s;
-  }
-  .btn-geo:hover { background: #179A29; }
-  .btn-geo:active { transform: scale(0.98); }
-  .btn-geo:disabled {
-    background: var(--text-muted);
-    cursor: not-allowed;
-  }
-  .btn-geo svg { width: 18px; height: 18px; }
+  .statsbar{background:var(--card-bg);border-bottom:1px solid var(--border);padding:7px 16px;display:none;align-items:center;gap:14px;flex-wrap:wrap;z-index:999}
+  .statsbar.vis{display:flex}
+  .st{display:flex;align-items:center;gap:4px}
+  .st-d{width:8px;height:8px;border-radius:50%}
+  .st-l{font-size:10px;color:var(--text-muted)}
+  .st-v{font-size:12px;font-weight:700}
+  .fgrp{margin-left:auto;display:flex;gap:4px}
+  .fb{padding:3px 10px;font-family:'DM Sans';font-size:10px;font-weight:600;border:1.5px solid var(--border);border-radius:12px;background:transparent;color:var(--text-muted);cursor:pointer}
+  .fb:hover{border-color:var(--verde-medio);color:var(--verde-medio)}
+  .fb.on{background:var(--verde-oscuro);color:#fff;border-color:var(--verde-oscuro)}
+  #viewMap{flex:1;display:none;z-index:1}
+  #viewMap.vis{display:block}
 
-  .geo-status {
-    display: none;
-    align-items: center;
-    gap: 8px;
-    margin-top: 10px;
-    font-size: 13px;
-    color: var(--success-text);
-  }
-  .geo-status.visible { display: flex; }
-  .geo-coords {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-top: 4px;
-    font-family: monospace;
-  }
+  .leaflet-popup-content-wrapper{border-radius:12px!important;box-shadow:0 4px 20px rgba(0,0,0,.12)!important;padding:0!important;overflow:hidden}
+  .leaflet-popup-content{margin:0!important;width:260px!important}
+  .ph{background:var(--verde-oscuro);padding:11px 14px;color:#fff}
+  .pn{font-size:13px;font-weight:700;line-height:1.3}
+  .ppq{font-size:10px;color:var(--dorado-claro);margin-top:2px}
+  .pbdy{padding:10px 14px}
+  .prw{display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid #F0EDE6;font-size:11px}
+  .prw:last-child{border-bottom:none}
+  .plb{color:var(--text-muted)}.pvl{font-weight:600;color:var(--text-primary);text-align:right;max-width:150px}
+  .gbm{background:#E3F2FD;color:#1565C0;display:inline-block;padding:2px 7px;border-radius:6px;font-size:9px;font-weight:700}
+  .gbf{background:#FCE4EC;color:#C62828;display:inline-block;padding:2px 7px;border-radius:6px;font-size:9px;font-weight:700}
+  .pco{margin-top:5px;padding-top:6px;border-top:1px dashed var(--border);font-size:9px;color:var(--text-muted);font-family:monospace}
+  .pml{display:block;margin-top:6px;text-align:center;padding:5px;background:var(--verde-oscuro);color:#fff;border-radius:7px;text-decoration:none;font-size:10px;font-weight:600}
 
-  #map-container {
-    display: none;
-    margin-top: 12px;
-    border-radius: 10px;
-    overflow: hidden;
-    border: 1.5px solid var(--border);
-  }
-  #map-container.visible { display: block; }
-  #map { height: 200px; width: 100%; }
+  /* Community info popup */
+  .com-popup{font-family:'DM Sans';padding:10px 14px}
+  .com-popup-name{font-size:14px;font-weight:700;color:var(--verde-oscuro);margin-bottom:4px}
+  .com-popup-stat{font-size:12px;color:var(--text-secondary);line-height:1.6}
+  .com-popup-count{font-size:22px;font-weight:700;color:var(--verde-medio);display:block;margin:4px 0}
 
-  /* ── Submit ── */
-  .btn-submit {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-    padding: 14px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    font-weight: 700;
-    color: #fff;
-    background: var(--verde-oscuro);
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: background 0.2s, transform 0.1s;
-    margin-top: 8px;
-  }
-  .btn-submit:hover { background: #234210; }
-  .btn-submit:active { transform: scale(0.98); }
-  .btn-submit:disabled {
-    background: var(--text-muted);
-    cursor: not-allowed;
-  }
+  .legend{background:var(--card-bg);border-radius:10px;padding:10px 14px;box-shadow:0 2px 12px rgba(0,0,0,.1);font-family:'DM Sans';line-height:1.8}
+  .legend-t{font-size:9px;font-weight:700;color:var(--verde-oscuro);margin-bottom:3px;text-transform:uppercase;letter-spacing:1px}
+  .legend-i{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text-muted)}
+  .legend-sw{width:10px;height:10px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.15);flex-shrink:0}
+  .legend-ln{width:16px;height:3px;border-radius:2px;flex-shrink:0}
 
-  .footer-note {
-    text-align: center;
-    font-size: 11.5px;
-    color: var(--text-muted);
-    margin-top: 20px;
-    line-height: 1.5;
-  }
-
-  /* ── Success state ── */
-  .success-screen {
-    display: none;
-    text-align: center;
-    padding: 48px 24px;
-  }
-  .success-screen.visible { display: block; }
-  .success-icon {
-    width: 64px; height: 64px;
-    background: var(--success-bg);
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 20px;
-  }
-  .success-icon svg { width: 32px; height: 32px; color: var(--success-text); }
-  .success-screen h2 {
-    font-family: 'Playfair Display', serif;
-    font-size: 22px;
-    color: var(--verde-oscuro);
-    margin-bottom: 10px;
-  }
-  .success-screen p {
-    font-size: 14px;
-    color: var(--text-secondary);
-    line-height: 1.6;
-  }
-
-  /* ── Loading spinner ── */
-  .spinner {
-    width: 20px; height: 20px;
-    border: 2.5px solid rgba(255,255,255,0.3);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ── Error banner ── */
-  .error-banner {
-    display: none;
-    background: #FDF2F2;
-    border: 1px solid #F5C6C6;
-    border-radius: 10px;
-    padding: 12px 16px;
-    margin-bottom: 16px;
-    font-size: 13px;
-    color: var(--danger);
-    line-height: 1.5;
-  }
-  .error-banner.visible { display: block; }
+  @media(max-width:600px){.nav{padding:8px 12px;flex-wrap:wrap;gap:8px}}
 </style>
 </head>
 <body>
 
-<div class="page-wrapper">
-  <!-- Header -->
-  <div class="header">
-    <div class="header-badge">El Plan de la Gente</div>
-    <h1>Registro de Militantes</h1>
-    <p>Cantón Tosagua – Corazón de Manabí</p>
+<!-- NAV -->
+<div class="nav">
+  <div class="nav-left">
+    <span class="nav-badge" id="navBadge">El Plan de la Gente</span>
+    <span class="nav-title">Registro de Militantes</span>
   </div>
-  <div class="stripe-bar"></div>
+  <button class="nav-tab" id="mapTab" style="display:none" onclick="goPage('map',this)">Mapa</button>
+</div>
 
-  <!-- Form -->
-  <div class="form-card" id="formCard">
-    <p class="form-intro">
-      Estimado/a militante del equipo del Ing. César Bernabé, este formulario nos permite nutrir nuestra base de datos de la plataforma política. Todos los campos son obligatorios.
-    </p>
-
-    <div class="error-banner" id="errorBanner"></div>
-
-    <form id="registroForm" novalidate>
-      <!-- Nombres -->
-      <div class="field">
-        <label>Nombres y apellidos completos <span class="req">*</span></label>
-        <input type="text" id="nombres" placeholder="Ej: Juan Carlos Pérez López" autocomplete="name">
-        <div class="error-msg">Ingrese sus nombres y apellidos completos</div>
-      </div>
-
-      <!-- Cédula -->
-      <div class="field">
-        <label>Número de cédula <span class="req">*</span></label>
-        <input type="tel" id="cedula" placeholder="10 dígitos" maxlength="10" inputmode="numeric">
-        <div class="error-msg">Ingrese un número de cédula válido (10 dígitos)</div>
-      </div>
-
-      <!-- Celular -->
-      <div class="field">
-        <label>Número de celular <span class="req">*</span></label>
-        <input type="tel" id="celular" placeholder="Ej: 0991234567" maxlength="10" inputmode="tel">
-        <div class="error-msg">Ingrese un número de celular válido</div>
-      </div>
-
-      <!-- Edad -->
-      <div class="field">
-        <label>Edad <span class="req">*</span></label>
-        <input type="number" id="edad" placeholder="Ej: 35" min="16" max="110" inputmode="numeric">
-        <div class="error-msg">Ingrese una edad válida</div>
-      </div>
-
-      <!-- Parroquia -->
-      <div class="field">
-        <label>Parroquia en la que vive <span class="req">*</span></label>
-        <div class="radio-group" id="parroquiaGroup">
-          <label class="radio-option" onclick="selectRadio(this)">
-            <input type="radio" name="parroquia" value="Tosagua (cabecera cantonal)">
-            <span class="radio-dot"></span>
-            <span class="radio-label">Tosagua (cabecera cantonal)</span>
-          </label>
-          <label class="radio-option" onclick="selectRadio(this)">
-            <input type="radio" name="parroquia" value="Bachillero">
-            <span class="radio-dot"></span>
-            <span class="radio-label">Bachillero</span>
-          </label>
-          <label class="radio-option" onclick="selectRadio(this)">
-            <input type="radio" name="parroquia" value="Ángel Pedro Giler (La Estancilla)">
-            <span class="radio-dot"></span>
-            <span class="radio-label">Ángel Pedro Giler (La Estancilla)</span>
-          </label>
-        </div>
-      </div>
-
-      <!-- Dirección -->
-      <div class="field">
-        <label>Dirección en la que vive <span class="req">*</span></label>
-        <input type="text" id="direccion" placeholder="Calle, sector o referencia">
-        <div class="error-msg">Ingrese su dirección</div>
-      </div>
-
-      <!-- Geolocalización -->
-      <div class="geo-section" id="geoSection">
-        <div class="geo-title">Ubicación de su domicilio</div>
-        <div class="geo-desc">Presione el botón para registrar automáticamente las coordenadas de donde se encuentra. Si no está en su domicilio, puede omitir este paso.</div>
-        <button type="button" class="btn-geo" id="btnGeo" onclick="getLocation()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 7 12 8 12s8-6.6 8-12a8 8 0 0 0-8-8z"/></svg>
-          Compartir mi ubicación
-        </button>
-        <div class="geo-status" id="geoStatus">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
-          <span>Ubicación registrada</span>
-        </div>
-        <div class="geo-coords" id="geoCoords"></div>
-        <div id="map-container"><div id="map"></div></div>
-      </div>
-
-      <!-- Submit -->
-      <button type="submit" class="btn-submit" id="btnSubmit">
-        Enviar registro
-      </button>
-    </form>
-
-    <p class="footer-note">
-      Sus datos serán utilizados exclusivamente para la plataforma política del Ing. César Bernabé.<br>
-      Cantón Tosagua, Manabí, Ecuador.
-    </p>
-  </div>
-
-  <!-- Success -->
-  <div class="form-card success-screen" id="successScreen">
-    <div class="success-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+<!-- ══════ REGISTRO PAGE ══════ -->
+<div class="page active" id="pageReg">
+  <div class="page-wrapper">
+    <div class="header">
+      <div class="header-badge">El Plan de la Gente</div>
+      <h1>Registro de Militantes</h1>
+      <p>Cantón Tosagua – Corazón de Manabí</p>
     </div>
-    <h2>¡Registro exitoso!</h2>
-    <p>Gracias por ser parte de El Plan de la Gente. Su información ha sido registrada correctamente en nuestra plataforma.</p>
+    <div class="stripe-bar"></div>
+    <div class="form-card" id="formCard">
+      <p class="form-intro">Estimado/a militante del equipo del Ing. César Bernabé, este formulario nos permite nutrir nuestra base de datos de la plataforma política. Todos los campos son obligatorios.</p>
+      <div class="error-banner" id="errorBanner"></div>
+      <form id="registroForm" novalidate>
+        <div class="field"><label>Nombres y apellidos completos <span class="req">*</span></label><input type="text" id="nombres" placeholder="Ej: Juan Carlos Pérez López" autocomplete="name"><div class="error-msg">Ingrese sus nombres y apellidos completos</div></div>
+        <div class="field"><label>Número de cédula <span class="req">*</span></label><input type="tel" id="cedula" placeholder="10 dígitos" maxlength="10" inputmode="numeric"><div class="error-msg">Ingrese un número de cédula válido (10 dígitos)</div></div>
+        <div class="field"><label>Número de celular <span class="req">*</span></label><input type="tel" id="celular" placeholder="Ej: 0991234567" maxlength="10" inputmode="tel"><div class="error-msg">Ingrese un número de celular válido</div></div>
+        <div class="field"><label>Edad <span class="req">*</span></label><input type="number" id="edad" placeholder="Ej: 35" min="16" max="110" inputmode="numeric"><div class="error-msg">Ingrese una edad válida</div></div>
+        <div class="field">
+          <label>Parroquia en la que vive <span class="req">*</span></label>
+          <div class="radio-group" id="parroquiaGroup">
+            <label class="radio-option" onclick="selectRadio(this)"><input type="radio" name="parroquia" value="Tosagua (cabecera cantonal)"><span class="radio-dot"></span><span class="radio-label">Tosagua (cabecera cantonal)</span></label>
+            <label class="radio-option" onclick="selectRadio(this)"><input type="radio" name="parroquia" value="Bachillero"><span class="radio-dot"></span><span class="radio-label">Bachillero</span></label>
+            <label class="radio-option" onclick="selectRadio(this)"><input type="radio" name="parroquia" value="Ángel Pedro Giler (La Estancilla)"><span class="radio-dot"></span><span class="radio-label">Ángel Pedro Giler (La Estancilla)</span></label>
+          </div>
+        </div>
+        <div class="field"><label>Dirección en la que vive <span class="req">*</span></label><input type="text" id="direccion" placeholder="Calle, sector o referencia"><div class="error-msg">Ingrese su dirección</div></div>
+
+        <!-- GEOLOCALIZACIÓN -->
+        <div class="geo-section" id="geoSection">
+          <div class="geo-title">Ubicación de su domicilio <span style="color:var(--danger)">*</span></div>
+          <div class="geo-desc">Seleccione cómo desea registrar la ubicación de su vivienda.</div>
+          <div class="geo-tabs">
+            <button type="button" class="geo-tab on" onclick="geoMode('auto',this)">Estoy en mi casa</button>
+            <button type="button" class="geo-tab" onclick="geoMode('manual',this)">No estoy en mi casa</button>
+          </div>
+          <div id="geoAuto">
+            <button type="button" class="btn-geo" id="btnGeo" onclick="getLocation()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 7 12 8 12s8-6.6 8-12a8 8 0 0 0-8-8z"/></svg>
+              Registrar mi ubicación actual
+            </button>
+          </div>
+          <div id="geoManual" style="display:none">
+            <p style="font-size:11.5px;color:var(--text-muted);margin-bottom:4px;line-height:1.5">Toque una comunidad para acercarse, luego toque el punto exacto de su vivienda.</p>
+          </div>
+          <div class="geo-status" id="geoStatus">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="14" height="14"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>Ubicación registrada</span>
+          </div>
+          <div class="geo-coords" id="geoCoords"></div>
+          <div id="map-container" style="position:relative">
+            <div id="map"></div>
+            <div class="map-hint" id="mapHint" style="display:none">Toque una comunidad para acercarse</div>
+            <button type="button" id="btnFullscreen" onclick="openFullMap()" style="display:none;position:absolute;top:8px;right:8px;z-index:800;background:var(--card-bg);border:1.5px solid var(--border);border-radius:8px;padding:5px 10px;font-family:'DM Sans';font-size:11px;font-weight:600;color:var(--text-primary);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.15)">⛶ Pantalla completa</button>
+          </div>
+
+          <!-- Fullscreen map overlay -->
+          <div id="fullMapOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:var(--bg);flex-direction:column">
+            <div style="background:var(--verde-oscuro);padding:10px 16px;display:flex;align-items:center;justify-content:space-between">
+              <span style="color:#fff;font-size:13px;font-weight:600">Seleccione la ubicación de su vivienda</span>
+              <button type="button" onclick="closeFullMap()" style="background:transparent;border:1px solid rgba(255,255,255,.3);color:#fff;font-family:'DM Sans';font-size:11px;padding:4px 12px;border-radius:8px;cursor:pointer">✕ Cerrar</button>
+            </div>
+            <div id="fullMap" style="flex:1"></div>
+            <div id="fullMapBar" style="background:var(--card-bg);padding:10px 16px;display:flex;align-items:center;gap:10px;border-top:1px solid var(--border)">
+              <div style="flex:1">
+                <div style="font-size:11px;color:var(--text-muted)" id="fullMapStatus">Toque una comunidad para acercarse, luego marque su vivienda</div>
+                <div style="font-size:12px;font-weight:600;color:var(--verde-oscuro);font-family:monospace" id="fullMapCoords"></div>
+              </div>
+              <button type="button" id="fullMapAccept" onclick="acceptFullMap()" disabled style="background:var(--verde-medio);color:#fff;border:none;font-family:'DM Sans';font-size:13px;font-weight:700;padding:10px 24px;border-radius:10px;cursor:pointer;opacity:.4">Aceptar</button>
+            </div>
+          </div>
+        </div>
+        <button type="submit" class="btn-submit" id="btnSubmit">Enviar registro</button>
+      </form>
+      <p class="footer-note">Sus datos serán utilizados exclusivamente para la plataforma política del Ing. César Bernabé.<br>Cantón Tosagua, Manabí, Ecuador.</p>
+    </div>
+    <div class="form-card success-screen" id="successScreen">
+      <div class="success-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+      <h2>¡Registro exitoso!</h2>
+      <p>Gracias por ser parte de El Plan de la Gente. Su información ha sido registrada correctamente en nuestra plataforma.</p>
+    </div>
   </div>
 </div>
 
+<!-- ══════ MAPA PAGE ══════ -->
+<div class="page page-map" id="pageMap">
+  <div class="map-lock" id="mapLock">
+    <div class="lock-card">
+      <div class="lock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
+      <h2>Acceso restringido</h2>
+      <p>Ingrese la clave para ver el mapa de militantes.</p>
+      <input type="password" class="lock-input" id="lockPw" placeholder="Clave de acceso" onkeydown="if(event.key==='Enter')unlock()">
+      <button class="lock-btn" onclick="unlock()">Ingresar</button>
+      <div class="lock-err" id="lockErr">Clave incorrecta</div>
+    </div>
+  </div>
+  <div class="statsbar" id="viewStats">
+    <div class="st"><div class="st-d" style="background:var(--verde-medio)"></div><span class="st-l">Militantes</span><span class="st-v" id="v3">—</span></div>
+    <div class="st"><div class="st-d" style="background:var(--mc)"></div><span class="st-l">Hombres</span><span class="st-v" id="v1">—</span></div>
+    <div class="st"><div class="st-d" style="background:var(--fc)"></div><span class="st-l">Mujeres</span><span class="st-v" id="v2">—</span></div>
+    <div class="fgrp">
+      <button class="fb on" onclick="vFlt('a',this)">Todos</button>
+      <button class="fb" onclick="vFlt('m',this)">Hombres</button>
+      <button class="fb" onclick="vFlt('f',this)">Mujeres</button>
+      <button class="fb" style="border-color:var(--verde-medio);color:var(--verde-medio)" onclick="refreshMap()" id="btnRefresh" title="Actualizar datos">↻ Actualizar</button>
+      <button class="fb" style="border-color:var(--danger);color:var(--danger)" onclick="purgeConfirm()" id="btnPurge" title="Eliminar duplicados">Purgar duplicados</button>
+    </div>
+  </div>
+  <!-- Purge confirmation -->
+  <div id="purgeBar" style="display:none;background:#FFF8E1;border-bottom:1px solid #FFE082;padding:8px 16px;font-size:12px;color:#E65100;align-items:center;gap:8px;flex-wrap:wrap;z-index:999">
+    <span>¿Eliminar registros duplicados por cédula? Se conservará el registro más completo de cada militante.</span>
+    <button class="fb" style="border-color:#E65100;color:#E65100;font-weight:700" onclick="executePurge()">Sí, purgar ahora</button>
+    <button class="fb" onclick="cancelPurge()">Cancelar</button>
+    <span id="purgeResult" style="font-weight:600;color:var(--verde-oscuro)"></span>
+  </div>
+  <div id="viewMap"></div>
+</div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
-  // ══════════════════════════════════════════════════════════
-  // CONFIGURACIÓN: Pegue aquí su URL de Google Apps Script
-  // ══════════════════════════════════════════════════════════
-  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzKQTTkEhU7N-tIFCOAe2IQ2nCPMr_b0SxVtxNPujzftjOeE_qpsyeSECY3awmgQDiz/exec';
-  // ══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// CONFIGURACIÓN
+// ═══════════════════════════════════════════════════
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzKQTTkEhU7N-tIFCOAe2IQ2nCPMr_b0SxVtxNPujzftjOeE_qpsyeSECY3awmgQDiz/exec';
+const MAP_API = 'PEGAR_MAP_API_AQUI';
+const MAP_PASS = 'bernabe2027';
+// ═══════════════════════════════════════════════════
 
-  let lat = null;
-  let lng = null;
-  let map = null;
-  let marker = null;
+const GEO={"type":"FeatureCollection","name":"comunidades_named","crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC:1.3:CRS84"}},"features":[{"type":"Feature","properties":{"name":"Cerro Del Junco","area_ha":432,"cx":-80.34739,"cy":-0.84145},"geometry":{"type":"Polygon","coordinates":[[[-80.34755,-0.8304],[-80.33557,-0.84556],[-80.33632,-0.85317],[-80.3451,-0.85783],[-80.34538,-0.85774],[-80.3455,-0.85767],[-80.3457,-0.85756],[-80.34605,-0.85725],[-80.34633,-0.8569],[-80.34674,-0.85627],[-80.34715,-0.85551],[-80.34732,-0.85511],[-80.34742,-0.85478],[-80.34742,-0.85445],[-80.34742,-0.85429],[-80.34732,-0.85385],[-80.34721,-0.85354],[-80.34696,-0.853],[-80.34696,-0.85234],[-80.34706,-0.85151],[-80.34724,-0.85087],[-80.34747,-0.85033],[-80.34775,-0.84993],[-80.34801,-0.84966],[-80.34827,-0.84924],[-80.3485,-0.84871],[-80.34864,-0.84704],[-80.34872,-0.84655],[-80.34882,-0.84621],[-80.34895,-0.84592],[-80.34915,-0.8456],[-80.34837,-0.84501],[-80.34746,-0.84418],[-80.34769,-0.84357],[-80.34786,-0.84297],[-80.3479,-0.84265],[-80.34804,-0.84199],[-80.34818,-0.84174],[-80.34841,-0.84151],[-80.34865,-0.8413],[-80.34882,-0.84123],[-80.35048,-0.84125],[-80.35081,-0.8412],[-80.35115,-0.84106],[-80.35145,-0.84088],[-80.35198,-0.8405],[-80.35261,-0.83993],[-80.35318,-0.83962],[-80.35405,-0.83923],[-80.35492,-0.83875],[-80.35553,-0.83854],[-80.35615,-0.83818],[-80.35635,-0.83799],[-80.35666,-0.83762],[-80.35696,-0.83733],[-80.35727,-0.83709],[-80.35774,-0.83677],[-80.35804,-0.83671],[-80.35835,-0.83658],[-80.3593,-0.83601],[-80.36005,-0.83536],[-80.36036,-0.83514],[-80.3607,-0.83497],[-80.36117,-0.83487],[-80.36169,-0.83467],[-80.36199,-0.83448],[-80.36223,-0.83425],[-80.36242,-0.83397],[-80.36255,-0.8337],[-80.3626,-0.83355],[-80.36277,-0.83322],[-80.36284,-0.83309],[-80.36297,-0.8329],[-80.36316,-0.83268],[-80.36364,-0.83224],[-80.36383,-0.83199],[-80.36397,-0.83183],[-80.36412,-0.8316],[-80.36422,-0.83136],[-80.36429,-0.83123],[-80.36436,-0.83114],[-80.36041,-0.82848],[-80.34755,-0.8304]]]}},{"type":"Feature","properties":{"name":"Los Naranjos","area_ha":357,"cx":-80.24865,"cy":-0.8453},"geometry":{"type":"Polygon","coordinates":[[[-80.23347,-0.85058],[-80.25558,-0.85258],[-80.2612,-0.84534],[-80.26164,-0.84133],[-80.24461,-0.83629],[-80.23347,-0.85058]]]}},{"type":"Feature","properties":{"name":"Ci\u00e9naga Grande","area_ha":1551,"cx":-80.16794,"cy":-0.76157},"geometry":{"type":"Polygon","coordinates":[[[-80.15825,-0.79329],[-80.18095,-0.78047],[-80.17972,-0.7335],[-80.17882,-0.73271],[-80.17822,-0.73241],[-80.1768,-0.73117],[-80.17657,-0.73106],[-80.17535,-0.73079],[-80.17474,-0.73071],[-80.17297,-0.73091],[-80.17012,-0.73121],[-80.16607,-0.7321],[-80.16565,-0.73229],[-80.16555,-0.73234],[-80.16389,-0.73309],[-80.16331,-0.73352],[-80.16321,-0.73361],[-80.16283,-0.73396],[-80.16234,-0.73467],[-80.16231,-0.73472],[-80.16169,-0.73561],[-80.1614,-0.73587],[-80.16108,-0.73608],[-80.16072,-0.73639],[-80.16034,-0.73672],[-80.16003,-0.73697],[-80.15987,-0.7371],[-80.15952,-0.73739],[-80.15919,-0.73771],[-80.159,-0.73802],[-80.15891,-0.73816],[-80.15866,-0.73855],[-80.15863,-0.73893],[-80.15863,-0.73932],[-80.1587,-0.73973],[-80.15899,-0.74006],[-80.15905,-0.74014],[-80.15933,-0.74043],[-80.15952,-0.74081],[-80.15971,-0.74119],[-80.15997,-0.74153],[-80.16021,-0.74188],[-80.16024,-0.74193],[-80.16024,-0.74193],[-80.16041,-0.74222],[-80.16044,-0.74229],[-80.16063,-0.7426],[-80.16086,-0.743],[-80.16106,-0.74332],[-80.16112,-0.7434],[-80.16138,-0.74372],[-80.16152,-0.74407],[-80.16168,-0.74447],[-80.16179,-0.74491],[-80.1618,-0.74495],[-80.16182,-0.74545],[-80.16179,-0.74585],[-80.16175,-0.74622],[-80.16162,-0.74669],[-80.16157,-0.74682],[-80.16152,-0.74725],[-80.16147,-0.74766],[-80.16151,-0.74798],[-80.16153,-0.74811],[-80.16168,-0.74854],[-80.16184,-0.74891],[-80.16204,-0.74923],[-80.1624,-0.74953],[-80.16269,-0.74976],[-80.16272,-0.74981],[-80.16302,-0.7501],[-80.16325,-0.7504],[-80.16323,-0.75087],[-80.16312,-0.75109],[-80.16284,-0.75134],[-80.16253,-0.75157],[-80.16175,-0.75244],[-80.16164,-0.75255],[-80.16158,-0.75263],[-80.1615,-0.753],[-80.16145,-0.75348],[-80.16143,-0.75386],[-80.16148,-0.75429],[-80.16151,-0.75472],[-80.16152,-0.75511],[-80.16153,-0.75551],[-80.16157,-0.75587],[-80.1616,-0.75627],[-80.16163,-0.7567],[-80.16168,-0.75722],[-80.16171,-0.75762],[-80.16173,-0.75801],[-80.16185,-0.75852],[-80.1614,-0.75868],[-80.16111,-0.75884],[-80.15985,-0.75965],[-80.15978,-0.75971],[-80.15936,-0.76004],[-80.15846,-0.76076],[-80.15815,-0.76104],[-80.15775,-0.76136],[-80.15723,-0.76173],[-80.15671,-0.76196],[-80.15609,-0.76215],[-80.15443,-0.7626],[-80.15404,-0.76279],[-80.15365,-0.76291],[-80.15325,-0.76308],[-80.15304,-0.76323],[-80.15276,-0.76349],[-80.15274,-0.7635],[-80.15243,-0.76367],[-80.15212,-0.76384],[-80.15183,-0.76402],[-80.1515,-0.76424],[-80.15061,-0.76472],[-80.1503,-0.76484],[-80.14894,-0.76523],[-80.14894,-0.76523],[-80.14861,-0.76532],[-80.14858,-0.76533],[-80.14821,-0.76544],[-80.14527,-0.76581],[-80.14518,-0.76583],[-80.14506,-0.77065],[-80.14506,-0.77066],[-80.1468,-0.77038],[-80.14701,-0.77043],[-80.14833,-0.77109],[-80.14869,-0.77138],[-80.14882,-0.77147],[-80.149,-0.7715],[-80.14992,-0.77144],[-80.15015,-0.77151],[-80.15032,-0.77166],[-80.15234,-0.77325],[-80.15254,-0.77337],[-80.15394,-0.77376],[-80.15434,-0.77387],[-80.15518,-0.7741],[-80.15538,-0.77424],[-80.15615,-0.77522],[-80.15711,-0.77718],[-80.15719,-0.77789],[-80.15702,-0.78007],[-80.15686,-0.78072],[-80.15682,-0.78087],[-80.15668,-0.78145],[-80.15667,-0.78146],[-80.15643,-0.78242],[-80.15643,-0.78245],[-80.15641,-0.78252],[-80.1564,-0.78257],[-80.15639,-0.78258],[-80.15639,-0.78259],[-80.15637,-0.78267],[-80.15637,-0.78268],[-80.15636,-0.7827],[-80.15636,-0.78271],[-80.15636,-0.78272],[-80.15633,-0.78278],[-80.15615,-0.78321],[-80.15619,-0.78329],[-80.15622,-0.78335],[-80.15629,-0.78351],[-80.15663,-0.78425],[-80.15663,-0.78426],[-80.15665,-0.7843],[-80.15669,-0.7844],[-80.1567,-0.78442],[-80.15676,-0.78458],[-80.15693,-0.78494],[-80.15703,-0.78516],[-80.15712,-0.78543],[-80.15729,-0.78586],[-80.15781,-0.78714],[-80.15783,-0.78729],[-80.15785,-0.78736],[-80.15793,-0.78785],[-80.158,-0.78806],[-80.15816,-0.7882],[-80.15874,-0.78853],[-80.16016,-0.78939],[-80.16033,-0.78956],[-80.16043,-0.78979],[-80.16044,-0.78981],[-80.16044,-0.78998],[-80.16043,-0.79003],[-80.16035,-0.79035],[-80.16009,-0.7907],[-80.15939,-0.79143],[-80.15891,-0.79192],[-80.15826,-0.7931],[-80.15825,-0.79329]]]}},{"type":"Feature","properties":{"name":"El Juncal","area_ha":350,"cx":-80.24541,"cy":-0.7385},"geometry":{"type":"Polygon","coordinates":[[[-80.23862,-0.72397],[-80.24012,-0.74993],[-80.25146,-0.74887],[-80.2562,-0.74559],[-80.24301,-0.72291],[-80.23862,-0.72397]]]}},{"type":"Feature","properties":{"name":"Cerro Verde","area_ha":620,"cx":-80.3362,"cy":-0.76154},"geometry":{"type":"Polygon","coordinates":[[[-80.32804,-0.74494],[-80.32756,-0.77356],[-80.32779,-0.7742],[-80.33642,-0.77746],[-80.34897,-0.76941],[-80.34893,-0.76937],[-80.34862,-0.76915],[-80.34803,-0.76891],[-80.34785,-0.76873],[-80.34785,-0.76873],[-80.34784,-0.76859],[-80.34801,-0.76844],[-80.34845,-0.76784],[-80.34856,-0.76735],[-80.34851,-0.76567],[-80.34829,-0.76426],[-80.34826,-0.76411],[-80.34803,-0.76308],[-80.34793,-0.76179],[-80.3479,-0.76163],[-80.34784,-0.76146],[-80.34784,-0.76146],[-80.3477,-0.76133],[-80.34741,-0.76125],[-80.34704,-0.76102],[-80.34704,-0.76102],[-80.34689,-0.76072],[-80.34675,-0.76008],[-80.34675,-0.76008],[-80.3465,-0.75963],[-80.34632,-0.75943],[-80.34601,-0.75919],[-80.34579,-0.7593],[-80.34557,-0.75951],[-80.34543,-0.75953],[-80.34531,-0.75946],[-80.3451,-0.75906],[-80.3451,-0.75906],[-80.34489,-0.75839],[-80.34489,-0.75839],[-80.34426,-0.75745],[-80.34356,-0.75673],[-80.34288,-0.75621],[-80.3425,-0.75575],[-80.3425,-0.75575],[-80.3425,-0.75575],[-80.34233,-0.7554],[-80.34169,-0.75454],[-80.34163,-0.75444],[-80.34163,-0.75444],[-80.34155,-0.75432],[-80.34106,-0.75327],[-80.34057,-0.75249],[-80.34024,-0.75172],[-80.33983,-0.75095],[-80.33975,-0.75063],[-80.33956,-0.75033],[-80.33926,-0.75002],[-80.33903,-0.74988],[-80.33862,-0.74971],[-80.33814,-0.74924],[-80.33773,-0.7485],[-80.33752,-0.74785],[-80.33731,-0.74743],[-80.33654,-0.74631],[-80.33636,-0.7459],[-80.33627,-0.74553],[-80.33618,-0.74421],[-80.33617,-0.74398],[-80.33584,-0.74259],[-80.33599,-0.74182],[-80.33603,-0.74167],[-80.32804,-0.74494]]]}},{"type":"Feature","properties":{"name":"La Chipornia","area_ha":1880,"cx":-80.28447,"cy":-0.68597},"geometry":{"type":"MultiPolygon","coordinates":[[[[-80.29662,-0.66147],[-80.29685,-0.66166],[-80.2966,-0.65888],[-80.29616,-0.65939],[-80.29578,-0.66011],[-80.2957,-0.66083],[-80.29662,-0.66147]]],[[[-80.2898,-0.65447],[-80.28949,-0.6548],[-80.28937,-0.65491],[-80.28876,-0.65532],[-80.2884,-0.65554],[-80.2881,-0.65571],[-80.28778,-0.65588],[-80.2872,-0.65619],[-80.28682,-0.65629],[-80.28622,-0.65635],[-80.28558,-0.65637],[-80.28435,-0.65636],[-80.2839,-0.65636],[-80.28366,-0.65637],[-80.28306,-0.65636],[-80.28253,-0.65642],[-80.28211,-0.65656],[-80.28167,-0.65673],[-80.28117,-0.65693],[-80.28081,-0.65713],[-80.28045,-0.65737],[-80.27997,-0.65769],[-80.27965,-0.65798],[-80.27936,-0.65797],[-80.27912,-0.65796],[-80.27879,-0.65857],[-80.27824,-0.65954],[-80.27774,-0.6604],[-80.27726,-0.66134],[-80.27713,-0.66168],[-80.27702,-0.66198],[-80.27669,-0.66241],[-80.27624,-0.66293],[-80.27594,-0.66324],[-80.27556,-0.6637],[-80.27525,-0.66399],[-80.27509,-0.66417],[-80.27453,-0.66461],[-80.2741,-0.66497],[-80.2738,-0.66531],[-80.27368,-0.66551],[-80.27355,-0.66575],[-80.27353,-0.66585],[-80.27352,-0.66605],[-80.27355,-0.66611],[-80.27366,-0.66645],[-80.27367,-0.66648],[-80.27393,-0.66674],[-80.27408,-0.6669],[-80.2752,-0.66753],[-80.27571,-0.66803],[-80.27609,-0.66907],[-80.27612,-0.66914],[-80.27612,-0.66915],[-80.27592,-0.67082],[-80.27585,-0.67118],[-80.27562,-0.67189],[-80.27547,-0.67264],[-80.27547,-0.67335],[-80.27543,-0.67355],[-80.27532,-0.67528],[-80.2749,-0.67904],[-80.27466,-0.68214],[-80.27443,-0.68355],[-80.27429,-0.68427],[-80.27416,-0.68497],[-80.27401,-0.68529],[-80.27394,-0.68541],[-80.27388,-0.68554],[-80.27388,-0.68554],[-80.27386,-0.68559],[-80.27386,-0.68559],[-80.27381,-0.68568],[-80.27372,-0.68587],[-80.27348,-0.6861],[-80.27321,-0.68636],[-80.27235,-0.68676],[-80.2713,-0.68708],[-80.27063,-0.6871],[-80.27057,-0.6871],[-80.27032,-0.68683],[-80.27018,-0.68649],[-80.27015,-0.68641],[-80.2708,-0.68443],[-80.27083,-0.68428],[-80.27091,-0.68355],[-80.27091,-0.68327],[-80.27088,-0.68295],[-80.27086,-0.68273],[-80.27071,-0.68211],[-80.27063,-0.68185],[-80.27054,-0.68159],[-80.27052,-0.68153],[-80.27029,-0.681],[-80.27001,-0.68056],[-80.26952,-0.68009],[-80.26951,-0.68009],[-80.26903,-0.67994],[-80.26889,-0.6799],[-80.2688,-0.6799],[-80.26828,-0.67986],[-80.26775,-0.67991],[-80.2674,-0.67998],[-80.26707,-0.68016],[-80.26691,-0.68024],[-80.26683,-0.68029],[-80.2663,-0.68057],[-80.26569,-0.68091],[-80.26526,-0.68128],[-80.26478,-0.68167],[-80.26438,-0.68206],[-80.26392,-0.68242],[-80.2638,-0.68252],[-80.26337,-0.68291],[-80.26283,-0.6834],[-80.26228,-0.68391],[-80.2621,-0.68407],[-80.26175,-0.68438],[-80.26142,-0.68467],[-80.26116,-0.68495],[-80.26103,-0.68514],[-80.26096,-0.68525],[-80.26087,-0.68563],[-80.26077,-0.68623],[-80.26081,-0.68658],[-80.26093,-0.68676],[-80.26116,-0.68713],[-80.26136,-0.68745],[-80.26146,-0.68761],[-80.26186,-0.6882],[-80.26221,-0.68877],[-80.26242,-0.68923],[-80.2626,-0.69008],[-80.26255,-0.6906],[-80.26247,-0.69076],[-80.2621,-0.69111],[-80.26195,-0.69122],[-80.26187,-0.69122],[-80.26167,-0.69124],[-80.28536,-0.71793],[-80.29847,-0.70948],[-80.29933,-0.68883],[-80.29694,-0.66258],[-80.29668,-0.66255],[-80.29636,-0.66231],[-80.29607,-0.66198],[-80.29572,-0.6617],[-80.2954,-0.66129],[-80.29481,-0.66099],[-80.29442,-0.66111],[-80.29436,-0.6612],[-80.29382,-0.66089],[-80.29407,-0.66061],[-80.29454,-0.66032],[-80.29504,-0.66015],[-80.29544,-0.65987],[-80.29548,-0.65971],[-80.2955,-0.65933],[-80.29568,-0.65889],[-80.29574,-0.65882],[-80.29597,-0.6586],[-80.29655,-0.65838],[-80.29621,-0.65467],[-80.2957,-0.65472],[-80.29514,-0.65467],[-80.29506,-0.65467],[-80.29445,-0.65462],[-80.29389,-0.65454],[-80.29352,-0.65448],[-80.29286,-0.6544],[-80.29223,-0.65426],[-80.29193,-0.65413],[-80.29126,-0.6537],[-80.29123,-0.65368],[-80.29092,-0.65359],[-80.2907,-0.65358],[-80.29039,-0.6537],[-80.29031,-0.65377],[-80.29017,-0.65395],[-80.2898,-0.65447]]],[[[-80.28731,-0.65409],[-80.28541,-0.65475],[-80.28354,-0.6547],[-80.28277,-0.65418],[-80.28159,-0.6545],[-80.28125,-0.65544],[-80.28089,-0.65601],[-80.28074,-0.65624],[-80.28048,-0.65647],[-80.28044,-0.65668],[-80.28101,-0.65643],[-80.2814,-0.65624],[-80.282,-0.65607],[-80.28267,-0.65598],[-80.28324,-0.65596],[-80.28394,-0.65591],[-80.28455,-0.65588],[-80.28518,-0.65595],[-80.28582,-0.65596],[-80.28647,-0.65591],[-80.28699,-0.65579],[-80.28741,-0.65556],[-80.28775,-0.65536],[-80.28816,-0.65516],[-80.28855,-0.65488],[-80.28892,-0.65455],[-80.28921,-0.65423],[-80.2894,-0.65388],[-80.28962,-0.65321],[-80.2894,-0.65296],[-80.28845,-0.65328],[-80.28731,-0.65409]]]]}},{"type":"Feature","properties":{"name":"Larrea","area_ha":1048,"cx":-80.23671,"cy":-0.70866},"geometry":{"type":"MultiPolygon","coordinates":[[[[-80.25351,-0.69018],[-80.25354,-0.69037],[-80.25376,-0.68879],[-80.25375,-0.68883],[-80.25361,-0.6893],[-80.25359,-0.68939],[-80.25352,-0.68972],[-80.2535,-0.68981],[-80.2535,-0.69012],[-80.25351,-0.69018]]],[[[-80.24179,-0.6911],[-80.24174,-0.69111],[-80.24141,-0.69107],[-80.24109,-0.69103],[-80.24099,-0.69101],[-80.24043,-0.69086],[-80.24017,-0.69081],[-80.23995,-0.69074],[-80.23963,-0.69058],[-80.23916,-0.69033],[-80.23898,-0.69027],[-80.23878,-0.6902],[-80.23857,-0.69013],[-80.23826,-0.69002],[-80.23825,-0.69001],[-80.23821,-0.69002],[-80.23808,-0.69005],[-80.2379,-0.69009],[-80.23779,-0.69014],[-80.23753,-0.69033],[-80.23736,-0.69066],[-80.23728,-0.69082],[-80.23724,-0.69096],[-80.23715,-0.69123],[-80.2371,-0.69161],[-80.23709,-0.69204],[-80.23709,-0.69208],[-80.23717,-0.69261],[-80.23733,-0.69308],[-80.23747,-0.69336],[-80.23753,-0.69349],[-80.23768,-0.69385],[-80.23776,-0.69428],[-80.23769,-0.6945],[-80.23763,-0.69474],[-80.23762,-0.69474],[-80.23736,-0.69493],[-80.23734,-0.69494],[-80.23697,-0.69499],[-80.2368,-0.6949],[-80.23679,-0.69489],[-80.23661,-0.6948],[-80.23636,-0.6945],[-80.23631,-0.69443],[-80.23598,-0.69403],[-80.23567,-0.69374],[-80.23533,-0.69313],[-80.23521,-0.69302],[-80.23493,-0.69295],[-80.23464,-0.69299],[-80.23445,-0.69311],[-80.23439,-0.69318],[-80.23436,-0.69321],[-80.23423,-0.69359],[-80.23423,-0.69399],[-80.23432,-0.69443],[-80.23442,-0.69492],[-80.23455,-0.6956],[-80.23456,-0.69567],[-80.23451,-0.69618],[-80.2344,-0.69673],[-80.23438,-0.69677],[-80.23421,-0.697],[-80.23413,-0.69712],[-80.234,-0.69718],[-80.23359,-0.69736],[-80.23315,-0.69746],[-80.2326,-0.69745],[-80.23242,-0.69742],[-80.23232,-0.69739],[-80.23224,-0.69736],[-80.23214,-0.69731],[-80.23201,-0.69724],[-80.23192,-0.69717],[-80.23192,-0.69717],[-80.2317,-0.69692],[-80.23169,-0.69691],[-80.23152,-0.69632],[-80.23137,-0.69585],[-80.23138,-0.6955],[-80.23137,-0.69538],[-80.23134,-0.69501],[-80.23125,-0.6948],[-80.23125,-0.69477],[-80.2312,-0.69466],[-80.23069,-0.69448],[-80.23031,-0.6945],[-80.23026,-0.69451],[-80.23022,-0.69452],[-80.23007,-0.69463],[-80.22992,-0.69475],[-80.22959,-0.6951],[-80.22938,-0.69544],[-80.22936,-0.69549],[-80.22931,-0.69558],[-80.22929,-0.69608],[-80.22933,-0.69631],[-80.2294,-0.69676],[-80.22952,-0.69729],[-80.22966,-0.69784],[-80.22977,-0.69812],[-80.22982,-0.69829],[-80.23007,-0.69867],[-80.23007,-0.69886],[-80.22996,-0.69939],[-80.22989,-0.69951],[-80.2298,-0.69965],[-80.22975,-0.69969],[-80.22945,-0.69994],[-80.22896,-0.70014],[-80.22863,-0.70023],[-80.22818,-0.70029],[-80.22815,-0.70041],[-80.22813,-0.70045],[-80.22804,-0.70063],[-80.22793,-0.70076],[-80.2278,-0.7009],[-80.22747,-0.70118],[-80.22709,-0.70133],[-80.22709,-0.70133],[-80.22677,-0.70147],[-80.22674,-0.7015],[-80.22672,-0.70154],[-80.22673,-0.70167],[-80.22677,-0.70176],[-80.2271,-0.70207],[-80.22735,-0.70226],[-80.22786,-0.70257],[-80.22788,-0.70258],[-80.22825,-0.70285],[-80.22862,-0.70308],[-80.22895,-0.70349],[-80.2292,-0.70388],[-80.22932,-0.70427],[-80.22929,-0.70458],[-80.22913,-0.70472],[-80.22913,-0.70472],[-80.22902,-0.70482],[-80.22888,-0.70484],[-80.22844,-0.70491],[-80.22835,-0.70492],[-80.22755,-0.70495],[-80.22724,-0.70494],[-80.22689,-0.70493],[-80.22672,-0.70496],[-80.22666,-0.70497],[-80.22662,-0.70499],[-80.22658,-0.70502],[-80.22654,-0.70507],[-80.22653,-0.70512],[-80.22651,-0.70524],[-80.22651,-0.70529],[-80.22655,-0.70556],[-80.22659,-0.70567],[-80.2266,-0.70572],[-80.22701,-0.70619],[-80.22754,-0.70651],[-80.22779,-0.70668],[-80.22823,-0.70715],[-80.22825,-0.70717],[-80.22823,-0.70747],[-80.22823,-0.70749],[-80.22798,-0.70764],[-80.22796,-0.70766],[-80.22789,-0.70766],[-80.22705,-0.70769],[-80.22639,-0.70769],[-80.22623,-0.70768],[-80.22603,-0.70769],[-80.226,-0.70769],[-80.22596,-0.70769],[-80.22592,-0.7077],[-80.22589,-0.7077],[-80.22567,-0.70772],[-80.22548,-0.70775],[-80.22532,-0.70776],[-80.22516,-0.70776],[-80.22508,-0.70777],[-80.22503,-0.70779],[-80.22497,-0.70781],[-80.22492,-0.70784],[-80.22487,-0.70789],[-80.22485,-0.70791],[-80.22481,-0.70801],[-80.22481,-0.70806],[-80.22479,-0.70819],[-80.22476,-0.70833],[-80.22476,-0.70833],[-80.22474,-0.70847],[-80.22474,-0.70861],[-80.22475,-0.70869],[-80.22475,-0.70872],[-80.22476,-0.70881],[-80.22477,-0.70894],[-80.22479,-0.70902],[-80.22481,-0.70919],[-80.22484,-0.70937],[-80.2249,-0.70957],[-80.22495,-0.70979],[-80.22504,-0.71],[-80.22513,-0.71019],[-80.22524,-0.71037],[-80.2253,-0.71046],[-80.22536,-0.71055],[-80.22548,-0.71073],[-80.22561,-0.7109],[-80.22574,-0.71106],[-80.22586,-0.71121],[-80.22588,-0.71124],[-80.22589,-0.71126],[-80.22598,-0.71146],[-80.22601,-0.71165],[-80.22601,-0.71183],[-80.22598,-0.71196],[-80.22596,-0.71202],[-80.22595,-0.71207],[-80.22584,-0.71251],[-80.22571,-0.71286],[-80.22568,-0.71292],[-80.22553,-0.7132],[-80.22546,-0.71331],[-80.22524,-0.71355],[-80.2249,-0.71385],[-80.22475,-0.71398],[-80.22463,-0.71404],[-80.2245,-0.71405],[-80.2245,-0.71405],[-80.22441,-0.714],[-80.22432,-0.71392],[-80.22426,-0.71377],[-80.2242,-0.71357],[-80.22418,-0.71338],[-80.22422,-0.71294],[-80.22423,-0.71275],[-80.22417,-0.71251],[-80.22411,-0.71235],[-80.22404,-0.71226],[-80.22393,-0.7122],[-80.22376,-0.71216],[-80.22349,-0.71216],[-80.22349,-0.71216],[-80.22346,-0.71216],[-80.22313,-0.71223],[-80.22265,-0.71238],[-80.22237,-0.71253],[-80.22228,-0.71256],[-80.22228,-0.71256],[-80.22217,-0.71256],[-80.22206,-0.71251],[-80.22181,-0.71231],[-80.22149,-0.71199],[-80.22109,-0.71166],[-80.22078,-0.71143],[-80.22038,-0.71125],[-80.21997,-0.71112],[-80.21977,-0.7111],[-80.21957,-0.71108],[-80.21917,-0.71108],[-80.2188,-0.71108],[-80.2184,-0.71114],[-80.21802,-0.71121],[-80.21765,-0.71135],[-80.21723,-0.71154],[-80.21689,-0.71168],[-80.21649,-0.71187],[-80.21614,-0.71205],[-80.21577,-0.71225],[-80.21526,-0.71277],[-80.21454,-0.7137],[-80.21382,-0.71478],[-80.21312,-0.71619],[-80.21303,-0.7166],[-80.21303,-0.71705],[-80.21319,-0.71743],[-80.21339,-0.71785],[-80.21345,-0.71828],[-80.21345,-0.71858],[-80.22489,-0.72394],[-80.23862,-0.72397],[-80.24301,-0.72291],[-80.24983,-0.71673],[-80.2533,-0.69207],[-80.25303,-0.69226],[-80.25301,-0.69225],[-80.25223,-0.692],[-80.25157,-0.69169],[-80.25136,-0.6916],[-80.25074,-0.69135],[-80.25001,-0.69091],[-80.2498,-0.69072],[-80.24968,-0.69062],[-80.24898,-0.69032],[-80.2485,-0.69012],[-80.24832,-0.69004],[-80.24728,-0.68953],[-80.24665,-0.6893],[-80.24572,-0.68889],[-80.24499,-0.6886],[-80.24458,-0.68833],[-80.24455,-0.68831],[-80.24404,-0.68829],[-80.24368,-0.68829],[-80.2436,-0.68832],[-80.24352,-0.68835],[-80.24329,-0.68843],[-80.24299,-0.68859],[-80.24285,-0.68894],[-80.24283,-0.68903],[-80.24278,-0.68927],[-80.24277,-0.68935],[-80.24261,-0.68967],[-80.24251,-0.68985],[-80.24254,-0.69012],[-80.24254,-0.69012],[-80.24255,-0.69025],[-80.24257,-0.69044],[-80.24257,-0.69074],[-80.24246,-0.69088],[-80.24239,-0.69096],[-80.24236,-0.69097],[-80.24213,-0.69104],[-80.24179,-0.6911]]]]}},{"type":"Feature","properties":{"name":"San Fernando","area_ha":551,"cx":-80.2047,"cy":-0.74931},"geometry":{"type":"Polygon","coordinates":[[[-80.18969,-0.74112],[-80.20337,-0.76211],[-80.21866,-0.75864],[-80.22325,-0.75399],[-80.1933,-0.73359],[-80.1931,-0.73361],[-80.19034,-0.73326],[-80.19032,-0.73325],[-80.19018,-0.73369],[-80.1902,-0.73393],[-80.19033,-0.73476],[-80.19026,-0.73514],[-80.19027,-0.73555],[-80.19033,-0.73592],[-80.19038,-0.73636],[-80.19044,-0.73656],[-80.19049,-0.73669],[-80.19067,-0.7371],[-80.19083,-0.73742],[-80.1909,-0.7376],[-80.19109,-0.73793],[-80.19121,-0.73824],[-80.19124,-0.73843],[-80.19129,-0.73883],[-80.19123,-0.7392],[-80.19113,-0.73957],[-80.19102,-0.73983],[-80.19091,-0.74003],[-80.19073,-0.74026],[-80.19043,-0.74059],[-80.19027,-0.7407],[-80.18997,-0.74089],[-80.18984,-0.74098],[-80.18969,-0.74112]]]}},{"type":"Feature","properties":{"name":"La Atravesada","area_ha":903,"cx":-80.28586,"cy":-0.74847},"geometry":{"type":"Polygon","coordinates":[[[-80.27959,-0.72894],[-80.26883,-0.74616],[-80.269,-0.74671],[-80.28157,-0.7652],[-80.30001,-0.75933],[-80.30424,-0.74808],[-80.27966,-0.7289],[-80.27959,-0.72894]]]}},{"type":"Feature","properties":{"name":"El Polvar","area_ha":732,"cx":-80.35164,"cy":-0.78562},"geometry":{"type":"Polygon","coordinates":[[[-80.33642,-0.77746],[-80.34512,-0.79934],[-80.352,-0.80096],[-80.36587,-0.79244],[-80.36576,-0.7909],[-80.36587,-0.78994],[-80.36606,-0.78932],[-80.3665,-0.78833],[-80.36657,-0.78799],[-80.36651,-0.78783],[-80.36616,-0.78689],[-80.36616,-0.78689],[-80.36594,-0.78656],[-80.36594,-0.78656],[-80.36597,-0.78633],[-80.36612,-0.78625],[-80.36629,-0.78631],[-80.36653,-0.78626],[-80.36647,-0.78597],[-80.36651,-0.7858],[-80.36646,-0.78562],[-80.36646,-0.78562],[-80.3663,-0.78546],[-80.3663,-0.78546],[-80.36628,-0.78516],[-80.36636,-0.78485],[-80.36618,-0.78439],[-80.36624,-0.7841],[-80.36619,-0.78392],[-80.36619,-0.78392],[-80.36563,-0.78317],[-80.3655,-0.783],[-80.36473,-0.78238],[-80.36473,-0.78238],[-80.36458,-0.78206],[-80.36457,-0.78177],[-80.36473,-0.78088],[-80.36472,-0.78068],[-80.36448,-0.77998],[-80.36448,-0.77998],[-80.36418,-0.77987],[-80.36384,-0.77997],[-80.36354,-0.77995],[-80.36279,-0.77959],[-80.36249,-0.77963],[-80.36233,-0.77955],[-80.36139,-0.77874],[-80.36076,-0.7785],[-80.3606,-0.77835],[-80.3606,-0.77835],[-80.36051,-0.77809],[-80.36053,-0.77773],[-80.36053,-0.77773],[-80.36044,-0.77758],[-80.36015,-0.77722],[-80.35981,-0.77697],[-80.35981,-0.77697],[-80.35954,-0.77615],[-80.35954,-0.77615],[-80.35923,-0.77586],[-80.35909,-0.77583],[-80.35803,-0.7753],[-80.35677,-0.77536],[-80.35633,-0.77532],[-80.35617,-0.77524],[-80.35585,-0.77483],[-80.35555,-0.77463],[-80.3554,-0.77456],[-80.35461,-0.7745],[-80.35397,-0.77418],[-80.35397,-0.77418],[-80.3539,-0.77402],[-80.35394,-0.77386],[-80.35394,-0.77386],[-80.35384,-0.77371],[-80.35324,-0.7736],[-80.35262,-0.77365],[-80.35216,-0.77351],[-80.35171,-0.7732],[-80.35148,-0.77278],[-80.35062,-0.77201],[-80.35016,-0.7714],[-80.34967,-0.77093],[-80.34949,-0.77064],[-80.34949,-0.77064],[-80.34917,-0.76968],[-80.34917,-0.76968],[-80.34897,-0.76941],[-80.33642,-0.77746]]]}},{"type":"Feature","properties":{"name":"Matapalo Adentro","area_ha":631,"cx":-80.29126,"cy":-0.79473},"geometry":{"type":"Polygon","coordinates":[[[-80.27579,-0.79931],[-80.29296,-0.80538],[-80.30358,-0.8034],[-80.31014,-0.79953],[-80.30993,-0.79592],[-80.28898,-0.78349],[-80.27932,-0.78189],[-80.27579,-0.79931]]]}},{"type":"Feature","properties":{"name":"La Vaina","area_ha":308,"cx":-80.25411,"cy":-0.79639},"geometry":{"type":"Polygon","coordinates":[[[-80.24649,-0.78652],[-80.24443,-0.78908],[-80.24433,-0.78946],[-80.24677,-0.80043],[-80.26608,-0.80778],[-80.26687,-0.80629],[-80.25398,-0.78612],[-80.24649,-0.78652]]]}},{"type":"Feature","properties":{"name":"La Palma","area_ha":379,"cx":-80.19742,"cy":-0.79758},"geometry":{"type":"Polygon","coordinates":[[[-80.19692,-0.78412],[-80.18731,-0.80659],[-80.19516,-0.81219],[-80.198,-0.81238],[-80.20716,-0.78629],[-80.20485,-0.78418],[-80.20413,-0.78379],[-80.19692,-0.78412]]]}},{"type":"Feature","properties":{"name":"Figueroa","area_ha":159,"cx":-80.20081,"cy":-0.82535},"geometry":{"type":"Polygon","coordinates":[[[-80.19078,-0.83011],[-80.19139,-0.82994],[-80.19235,-0.82979],[-80.19239,-0.82979],[-80.19303,-0.82979],[-80.19307,-0.82979],[-80.19344,-0.82979],[-80.19348,-0.82979],[-80.19402,-0.82997],[-80.19447,-0.83025],[-80.19479,-0.83071],[-80.19516,-0.83134],[-80.19552,-0.83194],[-80.19589,-0.83254],[-80.19617,-0.83285],[-80.19624,-0.83293],[-80.19631,-0.83297],[-80.1966,-0.83313],[-80.19706,-0.83316],[-80.1971,-0.83316],[-80.19742,-0.83296],[-80.19764,-0.83239],[-80.19772,-0.83158],[-80.19772,-0.83089],[-80.19772,-0.83082],[-80.19825,-0.83009],[-80.19855,-0.82969],[-80.19863,-0.82961],[-80.19867,-0.82961],[-80.19938,-0.82953],[-80.19967,-0.82949],[-80.19982,-0.82947],[-80.20015,-0.82947],[-80.20036,-0.82943],[-80.20043,-0.82942],[-80.20046,-0.82941],[-80.20056,-0.8294],[-80.20124,-0.8293],[-80.20195,-0.82943],[-80.20223,-0.82956],[-80.20315,-0.83024],[-80.20341,-0.83035],[-80.2039,-0.83041],[-80.20574,-0.83018],[-80.20768,-0.82338],[-80.2046,-0.8176],[-80.20293,-0.81689],[-80.19078,-0.83011]]]}},{"type":"Feature","properties":{"name":"Botijas Afuera","area_ha":812,"cx":-80.30206,"cy":-0.85055},"geometry":{"type":"Polygon","coordinates":[[[-80.29186,-0.83661],[-80.28966,-0.83797],[-80.28865,-0.85231],[-80.30495,-0.87184],[-80.31584,-0.85497],[-80.30992,-0.83609],[-80.29787,-0.83517],[-80.29186,-0.83661]]]}},{"type":"Feature","properties":{"name":"Dos Caminos","area_ha":248,"cx":-80.32672,"cy":-0.82953},"geometry":{"type":"Polygon","coordinates":[[[-80.31491,-0.83492],[-80.32832,-0.83863],[-80.33582,-0.82442],[-80.33071,-0.81816],[-80.31491,-0.83492]]]}},{"type":"Feature","properties":{"name":"El Cairo","area_ha":892,"cx":-80.3211,"cy":-0.87272},"geometry":{"type":"Polygon","coordinates":[[[-80.33632,-0.85317],[-80.33112,-0.85564],[-80.31584,-0.85497],[-80.30495,-0.87184],[-80.30588,-0.88669],[-80.30621,-0.888],[-80.30636,-0.88844],[-80.30646,-0.88868],[-80.30693,-0.88884],[-80.30704,-0.88903],[-80.30706,-0.88911],[-80.30706,-0.88911],[-80.3074,-0.88968],[-80.30754,-0.88998],[-80.30755,-0.89001],[-80.30765,-0.89027],[-80.30768,-0.89036],[-80.30778,-0.89078],[-80.30782,-0.89128],[-80.30791,-0.89183],[-80.30857,-0.89284],[-80.30903,-0.89371],[-80.30906,-0.89378],[-80.30917,-0.89408],[-80.30919,-0.89467],[-80.3091,-0.89581],[-80.30914,-0.89604],[-80.30925,-0.89632],[-80.30951,-0.89682],[-80.30968,-0.89708],[-80.31032,-0.89785],[-80.31099,-0.89879],[-80.3114,-0.89926],[-80.3115,-0.89908],[-80.3118,-0.89871],[-80.31243,-0.89815],[-80.31271,-0.89799],[-80.31294,-0.8979],[-80.31409,-0.89752],[-80.31409,-0.89707],[-80.31418,-0.89638],[-80.31426,-0.89613],[-80.31438,-0.8959],[-80.31476,-0.89534],[-80.31544,-0.89441],[-80.31569,-0.89414],[-80.31621,-0.89367],[-80.31669,-0.89319],[-80.31693,-0.8929],[-80.31717,-0.89251],[-80.31751,-0.89159],[-80.31797,-0.89057],[-80.31802,-0.89036],[-80.31804,-0.88997],[-80.31809,-0.88973],[-80.31819,-0.88932],[-80.31991,-0.88874],[-80.32029,-0.88866],[-80.32075,-0.88866],[-80.3213,-0.88877],[-80.32171,-0.88892],[-80.32194,-0.88892],[-80.3221,-0.88889],[-80.32225,-0.88877],[-80.32251,-0.88843],[-80.32263,-0.88813],[-80.32311,-0.88718],[-80.3233,-0.88697],[-80.32375,-0.88658],[-80.32433,-0.8862],[-80.32492,-0.88581],[-80.32558,-0.88533],[-80.3264,-0.88472],[-80.32769,-0.88391],[-80.3282,-0.88367],[-80.32885,-0.88358],[-80.32952,-0.88361],[-80.33003,-0.88367],[-80.33059,-0.88387],[-80.33104,-0.88415],[-80.33129,-0.88437],[-80.33185,-0.88469],[-80.33234,-0.8836],[-80.33293,-0.88167],[-80.33295,-0.88144],[-80.33291,-0.88065],[-80.33295,-0.88025],[-80.33326,-0.87935],[-80.33412,-0.87777],[-80.33436,-0.87748],[-80.33479,-0.87726],[-80.3354,-0.87717],[-80.33546,-0.87714],[-80.33555,-0.87709],[-80.33577,-0.87685],[-80.33589,-0.87673],[-80.33592,-0.87635],[-80.33584,-0.87607],[-80.33572,-0.87581],[-80.33547,-0.87505],[-80.33536,-0.87412],[-80.33534,-0.87359],[-80.33525,-0.87309],[-80.3352,-0.87284],[-80.33516,-0.87249],[-80.3352,-0.8713],[-80.33568,-0.87039],[-80.33568,-0.87008],[-80.33559,-0.8695],[-80.33505,-0.8681],[-80.3346,-0.86716],[-80.33469,-0.86707],[-80.33537,-0.86663],[-80.33596,-0.86612],[-80.33622,-0.86595],[-80.3366,-0.86556],[-80.33688,-0.86534],[-80.33712,-0.86517],[-80.3376,-0.86498],[-80.33774,-0.86489],[-80.33787,-0.86474],[-80.33809,-0.86398],[-80.33822,-0.86337],[-80.33826,-0.86228],[-80.33839,-0.86195],[-80.33882,-0.86193],[-80.33957,-0.86122],[-80.33973,-0.86094],[-80.33988,-0.86036],[-80.33988,-0.86021],[-80.34007,-0.85962],[-80.34055,-0.85911],[-80.34129,-0.85854],[-80.34157,-0.85842],[-80.34234,-0.85826],[-80.34328,-0.85813],[-80.34414,-0.85798],[-80.34426,-0.85796],[-80.34447,-0.85794],[-80.34495,-0.85788],[-80.3451,-0.85783],[-80.33632,-0.85317]]]}},{"type":"Feature","properties":{"name":"San Antonio","area_ha":474,"cx":-80.3231,"cy":-0.84601},"geometry":{"type":"Polygon","coordinates":[[[-80.31002,-0.83602],[-80.30992,-0.83609],[-80.31584,-0.85497],[-80.33112,-0.85564],[-80.33632,-0.85317],[-80.33557,-0.84556],[-80.32832,-0.83863],[-80.31491,-0.83492],[-80.31002,-0.83602]]]}},{"type":"Feature","properties":{"name":"La Sequita","area_ha":249,"cx":-80.33719,"cy":-0.83451},"geometry":{"type":"Polygon","coordinates":[[[-80.32832,-0.83863],[-80.33557,-0.84556],[-80.34755,-0.8304],[-80.33582,-0.82442],[-80.32832,-0.83863]]]}},{"type":"Feature","properties":{"name":"Cascol","area_ha":756,"cx":-80.28925,"cy":-0.86933},"geometry":{"type":"Polygon","coordinates":[[[-80.27444,-0.86249],[-80.2707,-0.87275],[-80.2718,-0.87267],[-80.27203,-0.87261],[-80.27261,-0.87231],[-80.27319,-0.87207],[-80.2737,-0.87194],[-80.27426,-0.87187],[-80.27473,-0.87187],[-80.27523,-0.87194],[-80.27568,-0.87205],[-80.27608,-0.8722],[-80.27627,-0.87237],[-80.27643,-0.87244],[-80.27646,-0.87247],[-80.27648,-0.87249],[-80.2766,-0.8727],[-80.27662,-0.87273],[-80.27675,-0.87302],[-80.27686,-0.87325],[-80.27698,-0.8734],[-80.2773,-0.87373],[-80.27785,-0.87422],[-80.27808,-0.87438],[-80.27879,-0.87478],[-80.27909,-0.87491],[-80.27981,-0.87513],[-80.2813,-0.8758],[-80.28145,-0.87584],[-80.28188,-0.87587],[-80.28187,-0.87625],[-80.28184,-0.87634],[-80.28154,-0.87682],[-80.2815,-0.87712],[-80.28186,-0.87689],[-80.28212,-0.87681],[-80.28269,-0.87677],[-80.28294,-0.87679],[-80.28318,-0.87686],[-80.28361,-0.87708],[-80.28379,-0.87725],[-80.28392,-0.87742],[-80.28418,-0.8784],[-80.2843,-0.87862],[-80.28437,-0.87872],[-80.28456,-0.87897],[-80.28461,-0.87905],[-80.28493,-0.87934],[-80.2851,-0.87943],[-80.28529,-0.87947],[-80.2867,-0.87949],[-80.28702,-0.87952],[-80.28732,-0.87959],[-80.28756,-0.87972],[-80.28773,-0.87991],[-80.28792,-0.88029],[-80.28795,-0.88049],[-80.28796,-0.88121],[-80.28808,-0.88162],[-80.28849,-0.8822],[-80.2895,-0.8835],[-80.28995,-0.88404],[-80.2901,-0.88434],[-80.29022,-0.88459],[-80.29028,-0.8847],[-80.29034,-0.8848],[-80.29056,-0.88518],[-80.29061,-0.88525],[-80.2907,-0.8852],[-80.29089,-0.88508],[-80.29117,-0.88484],[-80.29162,-0.88439],[-80.29207,-0.88382],[-80.29241,-0.88346],[-80.29263,-0.88316],[-80.29438,-0.88162],[-80.29481,-0.88135],[-80.29528,-0.88103],[-80.29545,-0.88092],[-80.29547,-0.88091],[-80.29575,-0.88073],[-80.29637,-0.88038],[-80.29712,-0.88019],[-80.29776,-0.88023],[-80.29858,-0.8803],[-80.30123,-0.88084],[-80.30366,-0.8817],[-80.30394,-0.88177],[-80.30415,-0.88212],[-80.30434,-0.88243],[-80.30435,-0.88245],[-80.3054,-0.88482],[-80.30588,-0.88669],[-80.30495,-0.87184],[-80.28865,-0.85231],[-80.27444,-0.86249]]]}},{"type":"Feature","properties":{"name":"Botijas Adentro","area_ha":687,"cx":-80.27606,"cy":-0.84597},"geometry":{"type":"Polygon","coordinates":[[[-80.26164,-0.84133],[-80.2612,-0.84534],[-80.27444,-0.86249],[-80.28865,-0.85231],[-80.28966,-0.83797],[-80.27103,-0.8321],[-80.26164,-0.84133]]]}},{"type":"Feature","properties":{"name":"El Junco","area_ha":485,"cx":-80.31975,"cy":-0.81841},"geometry":{"type":"Polygon","coordinates":[[[-80.31002,-0.83602],[-80.31491,-0.83492],[-80.33071,-0.81816],[-80.32945,-0.80804],[-80.31508,-0.80342],[-80.31002,-0.83602]]]}},{"type":"Feature","properties":{"name":"Muyuyal","area_ha":499,"cx":-80.30679,"cy":-0.81873},"geometry":{"type":"Polygon","coordinates":[[[-80.30358,-0.8034],[-80.29787,-0.83517],[-80.30992,-0.83609],[-80.31002,-0.83602],[-80.31508,-0.80342],[-80.31014,-0.79953],[-80.30358,-0.8034]]]}},{"type":"Feature","properties":{"name":"Monta\u00f1ita","area_ha":212,"cx":-80.24404,"cy":-0.85575},"geometry":{"type":"Polygon","coordinates":[[[-80.23214,-0.85146],[-80.23223,-0.85167],[-80.23233,-0.85182],[-80.23244,-0.85195],[-80.23258,-0.85206],[-80.23276,-0.85219],[-80.23288,-0.85224],[-80.23299,-0.85231],[-80.23315,-0.8524],[-80.23339,-0.85253],[-80.23372,-0.85273],[-80.23373,-0.85273],[-80.23386,-0.85286],[-80.23399,-0.853],[-80.23438,-0.85343],[-80.23462,-0.85369],[-80.23488,-0.85392],[-80.23508,-0.85412],[-80.23519,-0.85421],[-80.23529,-0.85429],[-80.23553,-0.85445],[-80.23592,-0.85463],[-80.23606,-0.85466],[-80.23618,-0.85471],[-80.23631,-0.85473],[-80.23645,-0.85476],[-80.23657,-0.85481],[-80.2367,-0.85484],[-80.23693,-0.85496],[-80.23697,-0.85509],[-80.23701,-0.85527],[-80.23701,-0.85527],[-80.23693,-0.85541],[-80.23684,-0.85553],[-80.23649,-0.85596],[-80.2363,-0.85616],[-80.23619,-0.85626],[-80.2361,-0.85635],[-80.23599,-0.85646],[-80.23589,-0.85655],[-80.23569,-0.85677],[-80.23562,-0.85686],[-80.23543,-0.85712],[-80.23515,-0.8575],[-80.23506,-0.85761],[-80.23501,-0.85773],[-80.23487,-0.85796],[-80.23485,-0.858],[-80.23479,-0.85811],[-80.23472,-0.85825],[-80.23469,-0.85835],[-80.23461,-0.85867],[-80.23458,-0.85882],[-80.23445,-0.85921],[-80.23441,-0.85934],[-80.23434,-0.85961],[-80.23423,-0.86044],[-80.23448,-0.86045],[-80.23466,-0.86045],[-80.23489,-0.86044],[-80.23515,-0.86045],[-80.23525,-0.86046],[-80.2355,-0.86053],[-80.2356,-0.86057],[-80.2357,-0.86063],[-80.23593,-0.86076],[-80.23603,-0.86082],[-80.23637,-0.861],[-80.23672,-0.86115],[-80.23692,-0.86119],[-80.237,-0.86121],[-80.23746,-0.86128],[-80.23776,-0.86131],[-80.23802,-0.86132],[-80.23805,-0.86132],[-80.2383,-0.86131],[-80.23843,-0.86129],[-80.23855,-0.86127],[-80.23902,-0.86119],[-80.23939,-0.86113],[-80.23977,-0.86104],[-80.2405,-0.8609],[-80.24111,-0.86076],[-80.24134,-0.8607],[-80.24148,-0.86065],[-80.24195,-0.86052],[-80.24247,-0.86038],[-80.24289,-0.86025],[-80.24344,-0.86007],[-80.24393,-0.85989],[-80.2443,-0.85975],[-80.24472,-0.85957],[-80.24527,-0.85929],[-80.24578,-0.85907],[-80.24592,-0.85903],[-80.24635,-0.85897],[-80.24646,-0.85896],[-80.24712,-0.85896],[-80.24738,-0.85895],[-80.24755,-0.85894],[-80.24776,-0.85893],[-80.24806,-0.85895],[-80.24825,-0.85897],[-80.2492,-0.85916],[-80.2494,-0.85921],[-80.24977,-0.85933],[-80.2499,-0.85938],[-80.24991,-0.85938],[-80.25015,-0.85951],[-80.25036,-0.85966],[-80.25072,-0.85992],[-80.25181,-0.86046],[-80.25211,-0.86058],[-80.25211,-0.86058],[-80.25239,-0.86078],[-80.2533,-0.86091],[-80.25334,-0.86086],[-80.25374,-0.86058],[-80.25379,-0.86047],[-80.25377,-0.86038],[-80.25355,-0.8601],[-80.25345,-0.85993],[-80.25348,-0.8595],[-80.2535,-0.85926],[-80.2535,-0.85926],[-80.25351,-0.85798],[-80.25355,-0.85739],[-80.25391,-0.85761],[-80.25416,-0.85772],[-80.25477,-0.85789],[-80.25484,-0.85794],[-80.25558,-0.85258],[-80.23347,-0.85058],[-80.23214,-0.85146]]]}},{"type":"Feature","properties":{"name":"Tres Camino","area_ha":356,"cx":-80.26424,"cy":-0.85964},"geometry":{"type":"Polygon","coordinates":[[[-80.25558,-0.85258],[-80.25484,-0.85794],[-80.25496,-0.85803],[-80.25503,-0.85814],[-80.25508,-0.85821],[-80.25515,-0.85838],[-80.25522,-0.85868],[-80.25524,-0.85888],[-80.25529,-0.85938],[-80.25542,-0.86031],[-80.25553,-0.86106],[-80.25555,-0.86123],[-80.25562,-0.86134],[-80.25577,-0.86149],[-80.25591,-0.86156],[-80.25616,-0.8616],[-80.25647,-0.86165],[-80.25671,-0.86174],[-80.25696,-0.86195],[-80.25806,-0.86312],[-80.25855,-0.86354],[-80.25869,-0.8637],[-80.25887,-0.86404],[-80.25909,-0.86463],[-80.25951,-0.86549],[-80.26003,-0.86635],[-80.26018,-0.86655],[-80.26043,-0.86676],[-80.26107,-0.86709],[-80.2616,-0.8673],[-80.26192,-0.86739],[-80.26287,-0.8675],[-80.26411,-0.86754],[-80.26447,-0.8676],[-80.26499,-0.86795],[-80.26545,-0.86834],[-80.26555,-0.86843],[-80.26577,-0.86865],[-80.26589,-0.86881],[-80.26657,-0.86968],[-80.26719,-0.87038],[-80.26731,-0.87057],[-80.26736,-0.8708],[-80.26731,-0.87112],[-80.26705,-0.87151],[-80.26701,-0.87167],[-80.26701,-0.87167],[-80.26707,-0.87182],[-80.2673,-0.8721],[-80.26732,-0.87257],[-80.26732,-0.87259],[-80.26737,-0.87274],[-80.26738,-0.87276],[-80.26798,-0.87275],[-80.2682,-0.8728],[-80.26836,-0.87295],[-80.26838,-0.87297],[-80.2684,-0.87298],[-80.26842,-0.87301],[-80.26884,-0.87296],[-80.26926,-0.87291],[-80.27032,-0.87278],[-80.2707,-0.87275],[-80.27444,-0.86249],[-80.2612,-0.84534],[-80.25558,-0.85258]]]}},{"type":"Feature","properties":{"name":"Las Guayjas","area_ha":525,"cx":-80.23236,"cy":-0.83627},"geometry":{"type":"Polygon","coordinates":[[[-80.22506,-0.82618],[-80.22487,-0.82637],[-80.22083,-0.84622],[-80.22094,-0.84618],[-80.22107,-0.8461],[-80.22117,-0.84601],[-80.22125,-0.8459],[-80.22131,-0.8458],[-80.22135,-0.84567],[-80.22149,-0.84539],[-80.22156,-0.84532],[-80.22171,-0.8453],[-80.22185,-0.84532],[-80.22194,-0.84538],[-80.22204,-0.84545],[-80.22228,-0.84564],[-80.22247,-0.84578],[-80.22256,-0.84586],[-80.22266,-0.84593],[-80.22274,-0.84601],[-80.22299,-0.84621],[-80.22351,-0.84666],[-80.22365,-0.84676],[-80.22404,-0.84704],[-80.22472,-0.84746],[-80.22504,-0.84764],[-80.22532,-0.84777],[-80.2255,-0.84778],[-80.22576,-0.84779],[-80.22589,-0.84777],[-80.22608,-0.84778],[-80.22622,-0.84778],[-80.22673,-0.84777],[-80.22699,-0.84776],[-80.22711,-0.84774],[-80.22731,-0.84774],[-80.22742,-0.84775],[-80.22756,-0.84778],[-80.22775,-0.84782],[-80.22812,-0.84792],[-80.22828,-0.84799],[-80.22863,-0.84812],[-80.22875,-0.84814],[-80.22887,-0.84814],[-80.22914,-0.84812],[-80.22923,-0.8481],[-80.22952,-0.848],[-80.22968,-0.84793],[-80.22992,-0.84783],[-80.23058,-0.84753],[-80.23082,-0.84738],[-80.23108,-0.84715],[-80.23115,-0.84708],[-80.23118,-0.84704],[-80.23135,-0.84685],[-80.23142,-0.84672],[-80.23167,-0.84622],[-80.23167,-0.84621],[-80.23182,-0.84646],[-80.23187,-0.84659],[-80.2319,-0.84672],[-80.23191,-0.84685],[-80.23194,-0.84718],[-80.23197,-0.84728],[-80.23205,-0.84739],[-80.23219,-0.8476],[-80.23222,-0.84773],[-80.23222,-0.84785],[-80.23218,-0.84802],[-80.23213,-0.84819],[-80.23206,-0.84833],[-80.23198,-0.84844],[-80.2319,-0.84853],[-80.23184,-0.84863],[-80.23174,-0.84886],[-80.23175,-0.84898],[-80.23179,-0.84912],[-80.23187,-0.84925],[-80.23195,-0.84933],[-80.23208,-0.84942],[-80.23219,-0.84946],[-80.23245,-0.8496],[-80.23255,-0.84969],[-80.23258,-0.84982],[-80.23263,-0.85009],[-80.23259,-0.85023],[-80.23251,-0.85038],[-80.23242,-0.85052],[-80.23231,-0.85062],[-80.23221,-0.85071],[-80.23214,-0.8508],[-80.23207,-0.8509],[-80.23205,-0.85107],[-80.23207,-0.85124],[-80.23212,-0.8514],[-80.23214,-0.85146],[-80.23347,-0.85058],[-80.24461,-0.83629],[-80.24139,-0.82633],[-80.23034,-0.82341],[-80.22506,-0.82618]]]}},{"type":"Feature","properties":{"name":"Las Maravillas","area_ha":664,"cx":-80.25679,"cy":-0.82796},"geometry":{"type":"Polygon","coordinates":[[[-80.2497,-0.81804],[-80.24139,-0.82633],[-80.24461,-0.83629],[-80.26164,-0.84133],[-80.27103,-0.8321],[-80.26501,-0.81389],[-80.26497,-0.8138],[-80.2497,-0.81804]]]}},{"type":"Feature","properties":{"name":"San Bartolom\u00e9","area_ha":265,"cx":-80.2165,"cy":-0.83192},"geometry":{"type":"Polygon","coordinates":[[[-80.20574,-0.83018],[-80.20594,-0.83016],[-80.2061,-0.83017],[-80.20619,-0.83021],[-80.20628,-0.83026],[-80.20641,-0.83037],[-80.20653,-0.83052],[-80.20676,-0.83094],[-80.20691,-0.83109],[-80.20709,-0.8312],[-80.20815,-0.83135],[-80.20935,-0.8316],[-80.20981,-0.83174],[-80.20996,-0.83182],[-80.21014,-0.83196],[-80.2116,-0.83341],[-80.21169,-0.83363],[-80.21199,-0.834],[-80.21232,-0.83423],[-80.21263,-0.83453],[-80.21291,-0.83492],[-80.21318,-0.83529],[-80.21331,-0.8355],[-80.21362,-0.83581],[-80.21379,-0.83594],[-80.21397,-0.83601],[-80.21482,-0.83612],[-80.21515,-0.83616],[-80.2154,-0.83619],[-80.21563,-0.83631],[-80.21573,-0.83651],[-80.21577,-0.83669],[-80.21579,-0.83681],[-80.21584,-0.83698],[-80.21591,-0.83715],[-80.21612,-0.83747],[-80.21622,-0.83766],[-80.21625,-0.83779],[-80.2163,-0.83829],[-80.21634,-0.83889],[-80.21637,-0.83903],[-80.21642,-0.83916],[-80.21656,-0.83932],[-80.21677,-0.83944],[-80.21748,-0.83975],[-80.21765,-0.83982],[-80.21792,-0.83993],[-80.21841,-0.84013],[-80.21837,-0.84026],[-80.21835,-0.8404],[-80.21832,-0.84051],[-80.21831,-0.84065],[-80.21829,-0.84079],[-80.21824,-0.84123],[-80.21823,-0.84142],[-80.21825,-0.84189],[-80.21826,-0.842],[-80.21826,-0.84206],[-80.21827,-0.8422],[-80.21827,-0.84238],[-80.21828,-0.84266],[-80.21828,-0.84285],[-80.2183,-0.84299],[-80.2183,-0.84315],[-80.21829,-0.84335],[-80.2183,-0.84353],[-80.2183,-0.8437],[-80.21828,-0.84417],[-80.21823,-0.84449],[-80.2182,-0.8447],[-80.2181,-0.84498],[-80.21803,-0.84513],[-80.21795,-0.84526],[-80.21791,-0.84532],[-80.21815,-0.84544],[-80.21839,-0.84551],[-80.21872,-0.84567],[-80.21902,-0.84589],[-80.2191,-0.84599],[-80.21927,-0.8463],[-80.2194,-0.84648],[-80.21941,-0.8465],[-80.2195,-0.84654],[-80.21963,-0.84657],[-80.21986,-0.84656],[-80.21999,-0.84655],[-80.22012,-0.84653],[-80.22022,-0.84649],[-80.22068,-0.84628],[-80.22083,-0.84622],[-80.22487,-0.82637],[-80.20768,-0.82338],[-80.20574,-0.83018]]]}},{"type":"Feature","properties":{"name":"La Pastora","area_ha":236,"cx":-80.19205,"cy":-0.82191},"geometry":{"type":"Polygon","coordinates":[[[-80.18065,-0.82782],[-80.18072,-0.82783],[-80.18099,-0.82797],[-80.18201,-0.82829],[-80.1825,-0.82883],[-80.18255,-0.82891],[-80.18263,-0.82902],[-80.18279,-0.82961],[-80.18294,-0.83019],[-80.18315,-0.83066],[-80.1834,-0.83097],[-80.18383,-0.83124],[-80.18428,-0.83131],[-80.18488,-0.83117],[-80.18555,-0.83085],[-80.1862,-0.83047],[-80.18683,-0.83017],[-80.18701,-0.83008],[-80.18726,-0.82995],[-80.18772,-0.82987],[-80.18776,-0.82987],[-80.18777,-0.82987],[-80.18812,-0.8299],[-80.18831,-0.82991],[-80.18902,-0.83004],[-80.18964,-0.83017],[-80.19019,-0.83018],[-80.19067,-0.83014],[-80.19078,-0.83011],[-80.20293,-0.81689],[-80.198,-0.81238],[-80.19516,-0.81219],[-80.18065,-0.82782]]]}},{"type":"Feature","properties":{"name":"La Estancilla","area_ha":212,"cx":-80.21433,"cy":-0.81925},"geometry":{"type":"Polygon","coordinates":[[[-80.2046,-0.8176],[-80.20768,-0.82338],[-80.22487,-0.82637],[-80.22506,-0.82618],[-80.2171,-0.81257],[-80.21275,-0.8112],[-80.2046,-0.8176]]]}},{"type":"Feature","properties":{"name":"Cristo Negro","area_ha":189,"cx":-80.22517,"cy":-0.81631},"geometry":{"type":"Polygon","coordinates":[[[-80.2171,-0.81257],[-80.22506,-0.82618],[-80.23034,-0.82341],[-80.23046,-0.81735],[-80.22885,-0.80785],[-80.2279,-0.80714],[-80.2171,-0.81257]]]}},{"type":"Feature","properties":{"name":"Los Pozos","area_ha":389,"cx":-80.20732,"cy":-0.80271},"geometry":{"type":"Polygon","coordinates":[[[-80.198,-0.81238],[-80.20293,-0.81689],[-80.2046,-0.8176],[-80.21275,-0.8112],[-80.21469,-0.78944],[-80.20716,-0.78629],[-80.198,-0.81238]]]}},{"type":"Feature","properties":{"name":"Soco Soco","area_ha":404,"cx":-80.21877,"cy":-0.77887},"geometry":{"type":"Polygon","coordinates":[[[-80.20485,-0.78418],[-80.20716,-0.78629],[-80.21469,-0.78944],[-80.21726,-0.78962],[-80.22279,-0.78575],[-80.2325,-0.77322],[-80.23175,-0.77148],[-80.21869,-0.76788],[-80.20485,-0.78418]]]}},{"type":"Feature","properties":{"name":"Los Pachones","area_ha":710,"cx":-80.18004,"cy":-0.7932},"geometry":{"type":"Polygon","coordinates":[[[-80.15825,-0.79329],[-80.1582,-0.79494],[-80.1582,-0.79494],[-80.15817,-0.79572],[-80.15878,-0.79568],[-80.1588,-0.79568],[-80.15951,-0.79563],[-80.16218,-0.79521],[-80.16452,-0.79434],[-80.16495,-0.79418],[-80.16502,-0.79415],[-80.16541,-0.79418],[-80.16588,-0.79432],[-80.16594,-0.79433],[-80.16647,-0.79478],[-80.16657,-0.7949],[-80.16698,-0.79544],[-80.1674,-0.79635],[-80.16745,-0.79647],[-80.1675,-0.79657],[-80.1675,-0.79657],[-80.1677,-0.79755],[-80.16806,-0.79847],[-80.16819,-0.79859],[-80.16897,-0.79929],[-80.16955,-0.79963],[-80.17005,-0.79992],[-80.17044,-0.79997],[-80.17048,-0.79998],[-80.17107,-0.80012],[-80.17141,-0.8003],[-80.17176,-0.80059],[-80.17204,-0.80095],[-80.17235,-0.80137],[-80.17268,-0.80181],[-80.17329,-0.80255],[-80.1735,-0.8028],[-80.17355,-0.80291],[-80.17356,-0.80291],[-80.17358,-0.80295],[-80.17363,-0.80305],[-80.17379,-0.80336],[-80.17382,-0.80343],[-80.17451,-0.8048],[-80.1748,-0.8054],[-80.17502,-0.80595],[-80.17508,-0.80609],[-80.17508,-0.80611],[-80.17509,-0.80613],[-80.17511,-0.80617],[-80.17512,-0.8062],[-80.1752,-0.8064],[-80.18731,-0.80659],[-80.19692,-0.78412],[-80.18095,-0.78047],[-80.15825,-0.79329]]]}},{"type":"Feature","properties":{"name":"Las Ca\u00f1itas","area_ha":243,"cx":-80.18494,"cy":-0.8146},"geometry":{"type":"Polygon","coordinates":[[[-80.18065,-0.82782],[-80.19516,-0.81219],[-80.18731,-0.80659],[-80.1752,-0.8064],[-80.17522,-0.80646],[-80.17535,-0.80679],[-80.17569,-0.80766],[-80.17586,-0.80783],[-80.17608,-0.80792],[-80.17986,-0.8087],[-80.18023,-0.80887],[-80.18029,-0.80894],[-80.18036,-0.80901],[-80.18036,-0.80903],[-80.18038,-0.80907],[-80.18043,-0.80931],[-80.1804,-0.80984],[-80.18003,-0.81129],[-80.17938,-0.81287],[-80.17889,-0.8145],[-80.18026,-0.81924],[-80.18049,-0.82052],[-80.18044,-0.82201],[-80.17995,-0.82394],[-80.17983,-0.82636],[-80.17953,-0.8271],[-80.17953,-0.8271],[-80.17955,-0.82711],[-80.17982,-0.8273],[-80.18009,-0.82751],[-80.1804,-0.82775],[-80.18065,-0.82782]]]}},{"type":"Feature","properties":{"name":"La Madera","area_ha":253,"cx":-80.21873,"cy":-0.80243},"geometry":{"type":"Polygon","coordinates":[[[-80.21275,-0.8112],[-80.2171,-0.81257],[-80.2279,-0.80714],[-80.2185,-0.79089],[-80.21726,-0.78962],[-80.21469,-0.78944],[-80.21275,-0.8112]]]}},{"type":"Feature","properties":{"name":"Tosagua (Casco Urbano)","area_ha":280,"cx":-80.23561,"cy":-0.78181},"geometry":{"type":"Polygon","coordinates":[[[-80.22279,-0.78575],[-80.24443,-0.78908],[-80.24649,-0.78652],[-80.24038,-0.77437],[-80.2325,-0.77322],[-80.22279,-0.78575]]]}},{"type":"Feature","properties":{"name":"Los Corrales","area_ha":234,"cx":-80.23954,"cy":-0.81879},"geometry":{"type":"Polygon","coordinates":[[[-80.23046,-0.81735],[-80.23034,-0.82341],[-80.24139,-0.82633],[-80.2497,-0.81804],[-80.24266,-0.81012],[-80.23046,-0.81735]]]}},{"type":"Feature","properties":{"name":"Cale\u00f1o","area_ha":189,"cx":-80.2289,"cy":-0.79969},"geometry":{"type":"Polygon","coordinates":[[[-80.2279,-0.80714],[-80.22885,-0.80785],[-80.23761,-0.80449],[-80.23697,-0.80037],[-80.23064,-0.79467],[-80.2185,-0.79089],[-80.2279,-0.80714]]]}},{"type":"Feature","properties":{"name":"Los Micos","area_ha":38,"cx":-80.23584,"cy":-0.79613},"geometry":{"type":"Polygon","coordinates":[[[-80.23064,-0.79467],[-80.23697,-0.80037],[-80.23992,-0.79333],[-80.23064,-0.79467]]]}},{"type":"Feature","properties":{"name":"Los Corrales","area_ha":126,"cx":-80.23512,"cy":-0.81009},"geometry":{"type":"Polygon","coordinates":[[[-80.22885,-0.80785],[-80.23046,-0.81735],[-80.24266,-0.81012],[-80.24046,-0.80529],[-80.23761,-0.80449],[-80.22885,-0.80785]]]}},{"type":"Feature","properties":{"name":"Vargas Torres","area_ha":180,"cx":-80.23046,"cy":-0.79024},"geometry":{"type":"Polygon","coordinates":[[[-80.21726,-0.78962],[-80.2185,-0.79089],[-80.23064,-0.79467],[-80.23992,-0.79333],[-80.24433,-0.78946],[-80.24443,-0.78908],[-80.22279,-0.78575],[-80.21726,-0.78962]]]}},{"type":"Feature","properties":{"name":"La Virgen","area_ha":115,"cx":-80.24186,"cy":-0.79827},"geometry":{"type":"Polygon","coordinates":[[[-80.23992,-0.79333],[-80.23697,-0.80037],[-80.23761,-0.80449],[-80.24046,-0.80529],[-80.24677,-0.80043],[-80.24433,-0.78946],[-80.23992,-0.79333]]]}},{"type":"Feature","properties":{"name":"La Pitahaya","area_ha":337,"cx":-80.25289,"cy":-0.80934},"geometry":{"type":"Polygon","coordinates":[[[-80.24046,-0.80529],[-80.24266,-0.81012],[-80.2497,-0.81804],[-80.26497,-0.8138],[-80.26608,-0.80778],[-80.24677,-0.80043],[-80.24046,-0.80529]]]}},{"type":"Feature","properties":{"name":"Matapalo Afuera","area_ha":613,"cx":-80.26778,"cy":-0.78871},"geometry":{"type":"Polygon","coordinates":[[[-80.25398,-0.78612],[-80.26687,-0.80629],[-80.27579,-0.79931],[-80.27932,-0.78189],[-80.27721,-0.77688],[-80.26225,-0.77574],[-80.25398,-0.78612]]]}},{"type":"Feature","properties":{"name":"Casical","area_ha":340,"cx":-80.25104,"cy":-0.77664},"geometry":{"type":"Polygon","coordinates":[[[-80.24772,-0.76768],[-80.24038,-0.77437],[-80.24649,-0.78652],[-80.25398,-0.78612],[-80.26225,-0.77574],[-80.25721,-0.76937],[-80.25053,-0.76689],[-80.24772,-0.76768]]]}},{"type":"Feature","properties":{"name":"La Vichola","area_ha":319,"cx":-80.29489,"cy":-0.77677},"geometry":{"type":"Polygon","coordinates":[[[-80.28898,-0.78349],[-80.30993,-0.79592],[-80.3128,-0.78759],[-80.30262,-0.77288],[-80.30023,-0.7597],[-80.30001,-0.75933],[-80.28157,-0.7652],[-80.27721,-0.77688],[-80.27932,-0.78189],[-80.28898,-0.78349]]]}},{"type":"Feature","properties":{"name":"La Primicia","area_ha":377,"cx":-80.29584,"cy":-0.81884},"geometry":{"type":"Polygon","coordinates":[[[-80.29296,-0.80538],[-80.28932,-0.81701],[-80.29186,-0.83661],[-80.29787,-0.83517],[-80.30358,-0.8034],[-80.29296,-0.80538]]]}},{"type":"Feature","properties":{"name":"Los Amarillos","area_ha":528,"cx":-80.27966,"cy":-0.82515},"geometry":{"type":"Polygon","coordinates":[[[-80.27103,-0.8321],[-80.28966,-0.83797],[-80.29186,-0.83661],[-80.28932,-0.81701],[-80.26501,-0.81389],[-80.27103,-0.8321]]]}},{"type":"Feature","properties":{"name":"El Para\u00edso","area_ha":411,"cx":-80.27913,"cy":-0.80883},"geometry":{"type":"Polygon","coordinates":[[[-80.26687,-0.80629],[-80.26608,-0.80778],[-80.26497,-0.8138],[-80.26501,-0.81389],[-80.28932,-0.81701],[-80.29296,-0.80538],[-80.27579,-0.79931],[-80.26687,-0.80629]]]}},{"type":"Feature","properties":{"name":"La Florida","area_ha":430,"cx":-80.31252,"cy":-0.77367},"geometry":{"type":"Polygon","coordinates":[[[-80.30262,-0.77288],[-80.3128,-0.78759],[-80.32779,-0.7742],[-80.32756,-0.77356],[-80.30023,-0.7597],[-80.30262,-0.77288]]]}},{"type":"Feature","properties":{"name":"El Venado","area_ha":1043,"cx":-80.36852,"cy":-0.8125},"geometry":{"type":"Polygon","coordinates":[[[-80.352,-0.80096],[-80.36041,-0.82848],[-80.36436,-0.83114],[-80.36438,-0.83111],[-80.36448,-0.83104],[-80.36473,-0.83076],[-80.36496,-0.83053],[-80.365,-0.83054],[-80.365,-0.83054],[-80.36522,-0.83059],[-80.36547,-0.83066],[-80.36547,-0.83066],[-80.36618,-0.83077],[-80.3666,-0.83081],[-80.36733,-0.83087],[-80.36804,-0.83091],[-80.3683,-0.83094],[-80.36831,-0.83094],[-80.36862,-0.83096],[-80.36903,-0.83104],[-80.36903,-0.83104],[-80.3695,-0.83115],[-80.36994,-0.83105],[-80.37018,-0.83093],[-80.37018,-0.83093],[-80.37046,-0.83076],[-80.37066,-0.83062],[-80.37076,-0.83044],[-80.37101,-0.83008],[-80.3712,-0.8298],[-80.37171,-0.82948],[-80.37198,-0.82934],[-80.3724,-0.82919],[-80.37306,-0.82895],[-80.37343,-0.82885],[-80.37371,-0.82882],[-80.37409,-0.82881],[-80.37439,-0.82882],[-80.37478,-0.82886],[-80.37527,-0.82896],[-80.37566,-0.82905],[-80.37624,-0.82917],[-80.37671,-0.82918],[-80.37814,-0.82927],[-80.37894,-0.82928],[-80.37946,-0.82929],[-80.37975,-0.82921],[-80.38002,-0.82909],[-80.3803,-0.8289],[-80.3805,-0.82866],[-80.38071,-0.82831],[-80.38081,-0.82805],[-80.38106,-0.82747],[-80.38123,-0.82707],[-80.38142,-0.8267],[-80.38168,-0.82626],[-80.38192,-0.82586],[-80.38217,-0.82546],[-80.38253,-0.82512],[-80.38289,-0.82472],[-80.38302,-0.82451],[-80.38319,-0.82397],[-80.38345,-0.82325],[-80.38371,-0.8227],[-80.38381,-0.82254],[-80.3839,-0.8224],[-80.38426,-0.82195],[-80.38377,-0.82181],[-80.3837,-0.82169],[-80.38357,-0.82148],[-80.38351,-0.82127],[-80.3835,-0.82102],[-80.3835,-0.82102],[-80.38351,-0.82073],[-80.38357,-0.82003],[-80.38357,-0.82003],[-80.38347,-0.81949],[-80.3834,-0.81927],[-80.38316,-0.81863],[-80.38292,-0.81826],[-80.38273,-0.81798],[-80.3825,-0.81766],[-80.38219,-0.81731],[-80.38197,-0.81707],[-80.38175,-0.81674],[-80.38154,-0.81636],[-80.38138,-0.81599],[-80.38137,-0.81596],[-80.38125,-0.81552],[-80.3812,-0.81521],[-80.38119,-0.81517],[-80.38119,-0.81517],[-80.38113,-0.8149],[-80.38108,-0.81455],[-80.38108,-0.81455],[-80.38108,-0.81425],[-80.38107,-0.81398],[-80.38107,-0.81398],[-80.3811,-0.81355],[-80.3811,-0.81347],[-80.38112,-0.81299],[-80.38117,-0.81264],[-80.38131,-0.81204],[-80.3815,-0.81148],[-80.38185,-0.81077],[-80.38204,-0.81032],[-80.38221,-0.80993],[-80.38224,-0.8097],[-80.38224,-0.8097],[-80.38221,-0.8095],[-80.38211,-0.80918],[-80.38203,-0.80895],[-80.382,-0.80872],[-80.382,-0.80872],[-80.38205,-0.80848],[-80.38218,-0.80831],[-80.3823,-0.80819],[-80.38251,-0.80811],[-80.38282,-0.80795],[-80.38318,-0.80784],[-80.38342,-0.80777],[-80.38351,-0.80774],[-80.38351,-0.80774],[-80.38286,-0.8074],[-80.38239,-0.80708],[-80.38185,-0.80666],[-80.38157,-0.80631],[-80.38132,-0.80598],[-80.38105,-0.8057],[-80.38077,-0.80537],[-80.38051,-0.80509],[-80.38022,-0.80479],[-80.37991,-0.80442],[-80.37955,-0.80385],[-80.37947,-0.8033],[-80.37947,-0.80327],[-80.37941,-0.8027],[-80.37941,-0.8027],[-80.37944,-0.80221],[-80.37967,-0.80176],[-80.37996,-0.8014],[-80.38021,-0.80113],[-80.38056,-0.80087],[-80.38056,-0.80087],[-80.3802,-0.80064],[-80.37978,-0.80055],[-80.37939,-0.80044],[-80.37886,-0.80014],[-80.3784,-0.79974],[-80.37804,-0.79931],[-80.37784,-0.79925],[-80.37781,-0.79922],[-80.37722,-0.79869],[-80.37658,-0.79809],[-80.37612,-0.79765],[-80.37601,-0.79754],[-80.37575,-0.7973],[-80.37548,-0.79705],[-80.37482,-0.79677],[-80.37421,-0.79673],[-80.37347,-0.79698],[-80.37212,-0.79724],[-80.37123,-0.79764],[-80.37097,-0.79763],[-80.37053,-0.79761],[-80.37043,-0.79715],[-80.37011,-0.79654],[-80.36969,-0.79611],[-80.36873,-0.79549],[-80.36834,-0.79506],[-80.36785,-0.79413],[-80.36768,-0.79353],[-80.36747,-0.79326],[-80.36702,-0.79307],[-80.36609,-0.79307],[-80.36604,-0.79307],[-80.36593,-0.793],[-80.3659,-0.79298],[-80.36587,-0.79244],[-80.352,-0.80096]]]}},{"type":"Feature","properties":{"name":"Las Yucas","area_ha":791,"cx":-80.34489,"cy":-0.81547},"geometry":{"type":"Polygon","coordinates":[[[-80.32945,-0.80804],[-80.33071,-0.81816],[-80.33582,-0.82442],[-80.34755,-0.8304],[-80.36041,-0.82848],[-80.352,-0.80096],[-80.34512,-0.79934],[-80.32945,-0.80804]]]}},{"type":"Feature","properties":{"name":"El Viento","area_ha":943,"cx":-80.32736,"cy":-0.7924},"geometry":{"type":"Polygon","coordinates":[[[-80.3128,-0.78759],[-80.30993,-0.79592],[-80.31014,-0.79953],[-80.31508,-0.80342],[-80.32945,-0.80804],[-80.34512,-0.79934],[-80.33642,-0.77746],[-80.32779,-0.7742],[-80.3128,-0.78759]]]}},{"type":"Feature","properties":{"name":"Roma","area_ha":680,"cx":-80.32279,"cy":-0.72944},"geometry":{"type":"Polygon","coordinates":[[[-80.31022,-0.71533],[-80.31621,-0.74235],[-80.32804,-0.74494],[-80.33603,-0.74167],[-80.33627,-0.74091],[-80.33619,-0.74027],[-80.33596,-0.73952],[-80.33608,-0.73794],[-80.33608,-0.7379],[-80.33605,-0.737],[-80.33604,-0.73655],[-80.33594,-0.73596],[-80.33539,-0.735],[-80.33513,-0.73428],[-80.33509,-0.73389],[-80.33516,-0.73363],[-80.33527,-0.73344],[-80.33526,-0.73306],[-80.33447,-0.73238],[-80.33427,-0.73192],[-80.33422,-0.73149],[-80.33423,-0.73136],[-80.33424,-0.73124],[-80.33424,-0.73124],[-80.3343,-0.73081],[-80.33443,-0.73051],[-80.33446,-0.73021],[-80.33425,-0.72973],[-80.33388,-0.72926],[-80.33341,-0.72886],[-80.33205,-0.72801],[-80.33185,-0.72792],[-80.33158,-0.72791],[-80.33112,-0.72805],[-80.33064,-0.72802],[-80.33024,-0.72781],[-80.32989,-0.7275],[-80.3296,-0.72726],[-80.32952,-0.72712],[-80.32938,-0.72666],[-80.32938,-0.72618],[-80.32957,-0.72556],[-80.32991,-0.72493],[-80.32994,-0.72447],[-80.32967,-0.724],[-80.32917,-0.72354],[-80.32906,-0.72336],[-80.32899,-0.72326],[-80.3289,-0.72246],[-80.32872,-0.72203],[-80.32871,-0.72139],[-80.32864,-0.72107],[-80.32836,-0.72056],[-80.3277,-0.72032],[-80.32748,-0.72008],[-80.32728,-0.71987],[-80.32717,-0.71976],[-80.32659,-0.71938],[-80.32568,-0.71878],[-80.32491,-0.71842],[-80.32484,-0.71815],[-80.32443,-0.71704],[-80.32421,-0.71617],[-80.32417,-0.71563],[-80.32424,-0.71505],[-80.32423,-0.71478],[-80.32412,-0.71418],[-80.32417,-0.71376],[-80.32427,-0.71358],[-80.32472,-0.71323],[-80.32486,-0.713],[-80.32499,-0.71243],[-80.32506,-0.71176],[-80.32505,-0.71089],[-80.31022,-0.71533]]]}},{"type":"Feature","properties":{"name":"Jacay","area_ha":1053,"cx":-80.29964,"cy":-0.72849},"geometry":{"type":"Polygon","coordinates":[[[-80.28536,-0.71793],[-80.27966,-0.7289],[-80.30424,-0.74808],[-80.31621,-0.74235],[-80.31022,-0.71533],[-80.29847,-0.70948],[-80.28536,-0.71793]]]}},{"type":"Feature","properties":{"name":"Mutre Adentro","area_ha":711,"cx":-80.31657,"cy":-0.75623},"geometry":{"type":"Polygon","coordinates":[[[-80.30424,-0.74808],[-80.30001,-0.75933],[-80.30023,-0.7597],[-80.32756,-0.77356],[-80.32804,-0.74494],[-80.31621,-0.74235],[-80.30424,-0.74808]]]}},{"type":"Feature","properties":{"name":"Cacho Rojo","area_ha":282,"cx":-80.23723,"cy":-0.76469},"geometry":{"type":"Polygon","coordinates":[[[-80.23012,-0.75365],[-80.23175,-0.77148],[-80.2325,-0.77322],[-80.24038,-0.77437],[-80.24772,-0.76768],[-80.23461,-0.75296],[-80.23012,-0.75365]]]}},{"type":"Feature","properties":{"name":"Clan Salazar","area_ha":442,"cx":-80.23297,"cy":-0.73778},"geometry":{"type":"Polygon","coordinates":[[[-80.22878,-0.75297],[-80.23012,-0.75365],[-80.23461,-0.75296],[-80.24012,-0.74993],[-80.23862,-0.72397],[-80.22489,-0.72394],[-80.22878,-0.75297]]]}},{"type":"Feature","properties":{"name":"El Barro","area_ha":337,"cx":-80.25789,"cy":-0.75569},"geometry":{"type":"Polygon","coordinates":[[[-80.25146,-0.74887],[-80.25053,-0.76689],[-80.25721,-0.76937],[-80.269,-0.74671],[-80.26883,-0.74616],[-80.2562,-0.74559],[-80.25146,-0.74887]]]}},{"type":"Feature","properties":{"name":"Mutre Afuera","area_ha":528,"cx":-80.26972,"cy":-0.76496},"geometry":{"type":"Polygon","coordinates":[[[-80.25721,-0.76937],[-80.26225,-0.77574],[-80.27721,-0.77688],[-80.28157,-0.7652],[-80.269,-0.74671],[-80.25721,-0.76937]]]}},{"type":"Feature","properties":{"name":"Buena Vista","area_ha":763,"cx":-80.26069,"cy":-0.73181},"geometry":{"type":"Polygon","coordinates":[[[-80.24301,-0.72291],[-80.2562,-0.74559],[-80.26883,-0.74616],[-80.27959,-0.72894],[-80.24983,-0.71673],[-80.24301,-0.72291]]]}},{"type":"Feature","properties":{"name":"El Tambo","area_ha":234,"cx":-80.2451,"cy":-0.75667},"geometry":{"type":"Polygon","coordinates":[[[-80.24012,-0.74993],[-80.23461,-0.75296],[-80.24772,-0.76768],[-80.25053,-0.76689],[-80.25146,-0.74887],[-80.24012,-0.74993]]]}},{"type":"Feature","properties":{"name":"Bachillero","area_ha":299,"cx":-80.21015,"cy":-0.76908},"geometry":{"type":"Polygon","coordinates":[[[-80.20337,-0.76211],[-80.20413,-0.78379],[-80.20485,-0.78418],[-80.21869,-0.76788],[-80.21866,-0.75864],[-80.20337,-0.76211]]]}},{"type":"Feature","properties":{"name":"Sina\u00ed","area_ha":770,"cx":-80.2156,"cy":-0.73629},"geometry":{"type":"Polygon","coordinates":[[[-80.1933,-0.73359],[-80.22325,-0.75399],[-80.22878,-0.75297],[-80.22489,-0.72394],[-80.21345,-0.71858],[-80.21345,-0.71875],[-80.21341,-0.71916],[-80.21313,-0.71949],[-80.21281,-0.71977],[-80.21255,-0.72005],[-80.21196,-0.72067],[-80.21109,-0.7216],[-80.21084,-0.72183],[-80.21048,-0.72212],[-80.21026,-0.72224],[-80.21009,-0.72229],[-80.20971,-0.72235],[-80.2093,-0.7224],[-80.20914,-0.72247],[-80.20898,-0.72261],[-80.20892,-0.7227],[-80.20888,-0.72283],[-80.2089,-0.72298],[-80.209,-0.72312],[-80.2092,-0.72329],[-80.20931,-0.72344],[-80.20941,-0.72369],[-80.20948,-0.72408],[-80.20953,-0.72445],[-80.20954,-0.72465],[-80.20952,-0.72482],[-80.20945,-0.72497],[-80.20934,-0.72517],[-80.2091,-0.72543],[-80.20902,-0.72551],[-80.20875,-0.72583],[-80.20843,-0.72611],[-80.2081,-0.72634],[-80.20776,-0.72654],[-80.20749,-0.72682],[-80.20724,-0.72712],[-80.20703,-0.72745],[-80.20679,-0.72785],[-80.20666,-0.72822],[-80.20657,-0.72858],[-80.20658,-0.72907],[-80.20658,-0.72934],[-80.20661,-0.72951],[-80.20671,-0.72989],[-80.20674,-0.73027],[-80.20678,-0.73069],[-80.20679,-0.7311],[-80.20678,-0.73116],[-80.20676,-0.73143],[-80.20677,-0.73148],[-80.20681,-0.73161],[-80.2069,-0.73175],[-80.20699,-0.73184],[-80.20699,-0.73184],[-80.20744,-0.73179],[-80.20752,-0.7318],[-80.20754,-0.7318],[-80.20785,-0.73181],[-80.20794,-0.73182],[-80.20796,-0.73182],[-80.2083,-0.73185],[-80.20855,-0.73217],[-80.20856,-0.73265],[-80.20852,-0.73282],[-80.2084,-0.73303],[-80.20831,-0.73321],[-80.20813,-0.73336],[-80.20775,-0.73355],[-80.20749,-0.73365],[-80.20748,-0.73365],[-80.20732,-0.73372],[-80.20732,-0.73372],[-80.20707,-0.73381],[-80.20682,-0.73389],[-80.20666,-0.73392],[-80.20646,-0.73394],[-80.20624,-0.73393],[-80.20588,-0.73336],[-80.20584,-0.73329],[-80.20541,-0.7326],[-80.20536,-0.73252],[-80.20511,-0.73212],[-80.20497,-0.73197],[-80.20493,-0.73193],[-80.20491,-0.7319],[-80.20457,-0.73155],[-80.20455,-0.73153],[-80.2038,-0.73074],[-80.20256,-0.72997],[-80.20146,-0.73021],[-80.20128,-0.73024],[-80.20104,-0.73029],[-80.19675,-0.73322],[-80.1933,-0.73359]]]}},{"type":"Feature","properties":{"name":"Monte Oscuro","area_ha":1042,"cx":-80.19072,"cy":-0.76348},"geometry":{"type":"Polygon","coordinates":[[[-80.18095,-0.78047],[-80.19692,-0.78412],[-80.20413,-0.78379],[-80.20337,-0.76211],[-80.18969,-0.74112],[-80.18955,-0.74123],[-80.18928,-0.74149],[-80.18923,-0.74154],[-80.18923,-0.74154],[-80.18915,-0.74162],[-80.18912,-0.74165],[-80.18898,-0.74179],[-80.18873,-0.74194],[-80.18837,-0.7417],[-80.18807,-0.74142],[-80.18768,-0.74111],[-80.18749,-0.74092],[-80.18715,-0.74066],[-80.1868,-0.74029],[-80.18677,-0.74027],[-80.18638,-0.73997],[-80.18606,-0.73978],[-80.18567,-0.73958],[-80.18514,-0.73931],[-80.18493,-0.73881],[-80.18493,-0.73878],[-80.18449,-0.73771],[-80.18306,-0.73666],[-80.18269,-0.73646],[-80.18201,-0.73572],[-80.18132,-0.73488],[-80.17972,-0.7335],[-80.18095,-0.78047]]]}},{"type":"Feature","properties":{"name":"La Propicia","area_ha":227,"cx":-80.22537,"cy":-0.76222},"geometry":{"type":"Polygon","coordinates":[[[-80.22325,-0.75399],[-80.21866,-0.75864],[-80.21869,-0.76788],[-80.23175,-0.77148],[-80.23012,-0.75365],[-80.22878,-0.75297],[-80.22325,-0.75399]]]}},{"type":"Feature","properties":{"name":"El Verdun","area_ha":961,"cx":-80.26553,"cy":-0.71024},"geometry":{"type":"Polygon","coordinates":[[[-80.25376,-0.68879],[-80.25354,-0.69037],[-80.25358,-0.69068],[-80.25368,-0.69117],[-80.25371,-0.69148],[-80.2537,-0.6915],[-80.25367,-0.69156],[-80.25349,-0.69193],[-80.2533,-0.69207],[-80.24983,-0.71673],[-80.27959,-0.72894],[-80.27966,-0.7289],[-80.28536,-0.71793],[-80.26167,-0.69124],[-80.26142,-0.69125],[-80.26079,-0.6908],[-80.26028,-0.69032],[-80.25994,-0.68982],[-80.25946,-0.68916],[-80.25945,-0.68915],[-80.25903,-0.68864],[-80.25859,-0.6881],[-80.25836,-0.68774],[-80.25817,-0.6874],[-80.25797,-0.68727],[-80.25789,-0.68727],[-80.25787,-0.68727],[-80.25767,-0.68729],[-80.25731,-0.68762],[-80.25717,-0.68785],[-80.25714,-0.6879],[-80.25698,-0.68817],[-80.25697,-0.68836],[-80.25697,-0.68845],[-80.25686,-0.68891],[-80.25671,-0.68926],[-80.2566,-0.68942],[-80.25648,-0.68959],[-80.25608,-0.68962],[-80.25608,-0.68962],[-80.25591,-0.68956],[-80.25543,-0.68931],[-80.25485,-0.68901],[-80.25441,-0.68878],[-80.25406,-0.68864],[-80.25383,-0.68864],[-80.2538,-0.68864],[-80.25376,-0.68879]]]}},{"type":"Feature","properties":{"name":"San Agustin","area_ha":919,"cx":-80.30881,"cy":-0.67645},"geometry":{"type":"MultiPolygon","coordinates":[[[[-80.30463,-0.6633],[-80.30396,-0.66333],[-80.30338,-0.66329],[-80.30304,-0.66325],[-80.30255,-0.66313],[-80.30206,-0.66299],[-80.30144,-0.66281],[-80.30084,-0.66268],[-80.30046,-0.66269],[-80.29983,-0.66259],[-80.29933,-0.6625],[-80.29887,-0.6625],[-80.29841,-0.66258],[-80.29792,-0.66265],[-80.2973,-0.66263],[-80.29694,-0.66258],[-80.29933,-0.68883],[-80.32446,-0.69991],[-80.32444,-0.69979],[-80.32371,-0.69889],[-80.3236,-0.6986],[-80.32347,-0.69768],[-80.32316,-0.69719],[-80.3231,-0.69709],[-80.32304,-0.697],[-80.323,-0.69689],[-80.32291,-0.69665],[-80.32285,-0.69621],[-80.32262,-0.69615],[-80.32248,-0.6961],[-80.32235,-0.69609],[-80.32218,-0.69607],[-80.32203,-0.69606],[-80.3218,-0.69604],[-80.32168,-0.69593],[-80.32125,-0.6955],[-80.32076,-0.69501],[-80.32076,-0.69501],[-80.32021,-0.69397],[-80.31991,-0.69336],[-80.31981,-0.69311],[-80.31995,-0.69235],[-80.31998,-0.69205],[-80.32012,-0.69089],[-80.32014,-0.69067],[-80.32017,-0.69036],[-80.3204,-0.68994],[-80.32048,-0.68979],[-80.32057,-0.6895],[-80.32057,-0.6895],[-80.32059,-0.68949],[-80.32079,-0.68943],[-80.32097,-0.68934],[-80.3211,-0.6893],[-80.32124,-0.68926],[-80.32141,-0.6892],[-80.32155,-0.68917],[-80.32155,-0.68917],[-80.32163,-0.68915],[-80.32171,-0.68912],[-80.32186,-0.68908],[-80.32201,-0.68902],[-80.32204,-0.689],[-80.32219,-0.68877],[-80.32225,-0.6887],[-80.32225,-0.6887],[-80.32225,-0.6886],[-80.32228,-0.68806],[-80.32261,-0.68726],[-80.32261,-0.68725],[-80.32283,-0.68663],[-80.32295,-0.68619],[-80.32329,-0.68547],[-80.32347,-0.68492],[-80.32347,-0.68449],[-80.32335,-0.68402],[-80.32335,-0.68402],[-80.32333,-0.68395],[-80.32322,-0.68351],[-80.32317,-0.68299],[-80.32317,-0.68289],[-80.32322,-0.68218],[-80.32331,-0.68131],[-80.32332,-0.6811],[-80.32313,-0.68121],[-80.32308,-0.68124],[-80.32271,-0.68089],[-80.32259,-0.68076],[-80.32222,-0.68052],[-80.3217,-0.68026],[-80.32122,-0.68005],[-80.32023,-0.67977],[-80.32047,-0.67945],[-80.32073,-0.67871],[-80.32098,-0.67875],[-80.32122,-0.67871],[-80.32131,-0.6785],[-80.32139,-0.67823],[-80.32143,-0.67782],[-80.32137,-0.67731],[-80.32122,-0.67681],[-80.32112,-0.67634],[-80.32102,-0.67585],[-80.3209,-0.67536],[-80.32088,-0.67532],[-80.32075,-0.67503],[-80.3206,-0.67486],[-80.32023,-0.67437],[-80.31977,-0.67413],[-80.31953,-0.67411],[-80.31929,-0.67408],[-80.3192,-0.67409],[-80.31881,-0.67415],[-80.31833,-0.67417],[-80.31781,-0.67421],[-80.31733,-0.67426],[-80.31709,-0.6742],[-80.31685,-0.67411],[-80.3166,-0.67389],[-80.31653,-0.67383],[-80.31635,-0.67366],[-80.31609,-0.6735],[-80.31587,-0.67335],[-80.31574,-0.67327],[-80.31539,-0.67306],[-80.31516,-0.6729],[-80.31489,-0.67277],[-80.31442,-0.67268],[-80.31393,-0.67267],[-80.31363,-0.67256],[-80.3134,-0.67241],[-80.31322,-0.67218],[-80.31314,-0.67201],[-80.31309,-0.67191],[-80.31313,-0.67142],[-80.31316,-0.67126],[-80.31316,-0.67124],[-80.31319,-0.67114],[-80.31324,-0.67094],[-80.31328,-0.67063],[-80.31322,-0.67044],[-80.31311,-0.67031],[-80.31295,-0.67022],[-80.31294,-0.67021],[-80.31241,-0.66959],[-80.31267,-0.66923],[-80.31288,-0.66886],[-80.31311,-0.66847],[-80.31328,-0.66815],[-80.31345,-0.66776],[-80.31354,-0.66741],[-80.31362,-0.66699],[-80.31381,-0.66639],[-80.31397,-0.66601],[-80.31421,-0.66541],[-80.31432,-0.66472],[-80.31431,-0.66409],[-80.31426,-0.66356],[-80.3142,-0.66327],[-80.31418,-0.66314],[-80.31411,-0.6629],[-80.31403,-0.66258],[-80.31389,-0.66219],[-80.31374,-0.66185],[-80.31346,-0.66126],[-80.31328,-0.66091],[-80.31313,-0.66064],[-80.3131,-0.66059],[-80.31281,-0.66029],[-80.31236,-0.66021],[-80.3122,-0.66025],[-80.31185,-0.66032],[-80.3109,-0.6607],[-80.31066,-0.66082],[-80.31053,-0.66089],[-80.31034,-0.66096],[-80.31015,-0.66103],[-80.30965,-0.66121],[-80.30919,-0.66148],[-80.30907,-0.66156],[-80.3088,-0.6617],[-80.30873,-0.66174],[-80.30831,-0.66196],[-80.30796,-0.66215],[-80.30746,-0.66241],[-80.3071,-0.66258],[-80.30662,-0.66278],[-80.30616,-0.66299],[-80.3058,-0.66311],[-80.3052,-0.66326],[-80.30463,-0.6633]]],[[[-80.29621,-0.65467],[-80.29655,-0.65838],[-80.29666,-0.65833],[-80.29721,-0.65826],[-80.29726,-0.65825],[-80.29767,-0.65805],[-80.29802,-0.65771],[-80.29833,-0.65709],[-80.29854,-0.65645],[-80.29856,-0.65638],[-80.29873,-0.65588],[-80.29875,-0.65583],[-80.29891,-0.65524],[-80.29898,-0.65492],[-80.29891,-0.65457],[-80.29878,-0.65439],[-80.2985,-0.65427],[-80.29834,-0.65426],[-80.29748,-0.65446],[-80.29729,-0.6545],[-80.29672,-0.65461],[-80.29623,-0.65467],[-80.29621,-0.65467]]],[[[-80.30332,-0.6627],[-80.30462,-0.66284],[-80.30524,-0.66255],[-80.3077,-0.66126],[-80.30947,-0.66025],[-80.3107,-0.65961],[-80.3114,-0.6586],[-80.31147,-0.6573],[-80.31124,-0.65666],[-80.31016,-0.65572],[-80.30893,-0.65529],[-80.30686,-0.65529],[-80.30516,-0.65522],[-80.30386,-0.65486],[-80.30201,-0.65407],[-80.30093,-0.65378],[-80.30032,-0.65392],[-80.29932,-0.65507],[-80.29878,-0.65658],[-80.29832,-0.65795],[-80.29785,-0.65831],[-80.29678,-0.65867],[-80.2966,-0.65888],[-80.29685,-0.66166],[-80.29732,-0.66205],[-80.29832,-0.66212],[-80.30024,-0.66226],[-80.30178,-0.66248],[-80.30332,-0.6627]]]]}},{"type":"Feature","properties":{"name":"Km. 21","area_ha":591,"cx":-80.31061,"cy":-0.70345},"geometry":{"type":"Polygon","coordinates":[[[-80.29847,-0.70948],[-80.31022,-0.71533],[-80.32505,-0.71089],[-80.32504,-0.71045],[-80.32517,-0.70925],[-80.32484,-0.70767],[-80.32488,-0.70712],[-80.325,-0.70661],[-80.32502,-0.70608],[-80.32486,-0.70491],[-80.32485,-0.70434],[-80.32457,-0.70325],[-80.32471,-0.70275],[-80.32463,-0.70206],[-80.32483,-0.70138],[-80.32481,-0.70121],[-80.32453,-0.70034],[-80.32446,-0.69991],[-80.29933,-0.68883],[-80.29847,-0.70948]]]}}]};
 
-  // ── Radio buttons ──
-  function selectRadio(el) {
-    document.querySelectorAll('.radio-option').forEach(r => r.classList.remove('selected'));
-    el.classList.add('selected');
-    el.querySelector('input').checked = true;
+
+// ══ PAGE NAV ══
+function goPage(p, btn) {
+  document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
+  document.getElementById(p === 'reg' ? 'pageReg' : 'pageMap').classList.add('active');
+  if (p === 'map' && viewMap) setTimeout(() => viewMap.invalidateSize(), 100);
+}
+
+// ══ SECRET ACCESS ══
+let secretKeys = {};
+document.addEventListener('keydown', e => {
+  secretKeys[e.key] = true;
+  if ((secretKeys['Control']||secretKeys['Meta']) && secretKeys['Shift'] && (secretKeys['m']||secretKeys['M'])) {
+    e.preventDefault(); secretKeys = {};
+    const tab = document.getElementById('mapTab');
+    tab.style.display = 'inline-block'; tab.click();
+    setTimeout(() => { if (!mapUnlocked) document.getElementById('lockPw').focus(); }, 200);
   }
+});
+document.addEventListener('keyup', e => { delete secretKeys[e.key]; });
+let tapC = 0, tapT = null;
+document.getElementById('navBadge').addEventListener('click', () => {
+  tapC++;
+  if (tapC === 5) { tapC = 0; clearTimeout(tapT); const tab = document.getElementById('mapTab'); tab.style.display = 'inline-block'; tab.click(); setTimeout(() => { if (!mapUnlocked) document.getElementById('lockPw').focus(); }, 200); }
+  if (tapT) clearTimeout(tapT);
+  tapT = setTimeout(() => { tapC = 0; }, 800);
+});
 
-  // ── Geolocation ──
-  function getLocation() {
-    const btn = document.getElementById('btnGeo');
-    if (!navigator.geolocation) {
-      alert('Su navegador no soporta geolocalización.');
-      return;
-    }
-    btn.disabled = true;
-    btn.innerHTML = '<div class="spinner"></div> Obteniendo ubicación...';
+// ══ COMMUNITY LAYER ══
+function makeComLayer(mapObj, opts = {}) {
+  const showLabels = opts.labels !== false;
+  const interactive = opts.interactive !== false;
+  let selectedLayer = null;
+  let labelMarkers = [];
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        lat = pos.coords.latitude;
-        lng = pos.coords.longitude;
-
-        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 7 12 8 12s8-6.6 8-12a8 8 0 0 0-8-8z"/></svg> Actualizar ubicación';
-        btn.disabled = false;
-
-        document.getElementById('geoStatus').classList.add('visible');
-        document.getElementById('geoCoords').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
-        document.getElementById('geoSection').classList.add('located');
-
-        // Show map
-        const mapContainer = document.getElementById('map-container');
-        mapContainer.classList.add('visible');
-
-        if (!map) {
-          map = L.map('map', { zoomControl: false, attributionControl: false }).setView([lat, lng], 16);
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19
-          }).addTo(map);
-          marker = L.marker([lat, lng]).addTo(map);
-        } else {
-          map.setView([lat, lng], 16);
-          marker.setLatLng([lat, lng]);
-        }
-
-        setTimeout(() => map.invalidateSize(), 100);
-      },
-      (err) => {
-        btn.disabled = false;
-        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 7 12 8 12s8-6.6 8-12a8 8 0 0 0-8-8z"/></svg> Compartir mi ubicación';
-        if (err.code === 1) {
-          alert('Permiso de ubicación denegado. Habilite el GPS e intente de nuevo.');
-        } else {
-          alert('No se pudo obtener la ubicación. Intente de nuevo.');
-        }
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-    );
-  }
-
-  // ── Validation ──
-  function validateField(id, condition) {
-    const el = document.getElementById(id);
-    if (!condition) {
-      el.classList.add('error');
-      return false;
-    }
-    el.classList.remove('error');
-    return true;
-  }
-
-  // ── Submit ──
-  document.getElementById('registroForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-
-    const nombres = document.getElementById('nombres').value.trim();
-    const cedula = document.getElementById('cedula').value.trim();
-    const celular = document.getElementById('celular').value.trim();
-    const edad = document.getElementById('edad').value.trim();
-    const parroquia = document.querySelector('input[name="parroquia"]:checked');
-    const direccion = document.getElementById('direccion').value.trim();
-
-    // Validate
-    let valid = true;
-    valid = validateField('nombres', nombres.length >= 5) && valid;
-    valid = validateField('cedula', /^\d{10}$/.test(cedula)) && valid;
-    valid = validateField('celular', /^0\d{9}$/.test(celular)) && valid;
-    valid = validateField('edad', edad && parseInt(edad) >= 16 && parseInt(edad) <= 110) && valid;
-    valid = validateField('direccion', direccion.length >= 3) && valid;
-
-    if (!parroquia) {
-      document.getElementById('parroquiaGroup').style.outline = '2px solid var(--danger)';
-      document.getElementById('parroquiaGroup').style.borderRadius = '10px';
-      valid = false;
-    } else {
-      document.getElementById('parroquiaGroup').style.outline = 'none';
-    }
-
-    if (!valid) return;
-
-    // Disable button
-    const btn = document.getElementById('btnSubmit');
-    btn.disabled = true;
-    btn.innerHTML = '<div class="spinner"></div> Enviando...';
-
-    const data = {
-      nombres: nombres,
-      cedula: cedula,
-      celular: celular,
-      edad: parseInt(edad),
-      parroquia: parroquia.value,
-      direccion: direccion,
-      latitud: lat ? lat.toFixed(6) : 'No proporcionada',
-      longitud: lng ? lng.toFixed(6) : 'No proporcionada',
-      fecha_registro: new Date().toLocaleString('es-EC', { timeZone: 'America/Guayaquil' })
-    };
-
-    try {
-      if (GOOGLE_SCRIPT_URL === 'PEGAR_URL_AQUI') {
-        // Demo mode — simular envío
-        await new Promise(r => setTimeout(r, 1500));
-        console.log('DATOS (modo demo):', JSON.stringify(data, null, 2));
-      } else {
-        const resp = await fetch(GOOGLE_SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
+  const layer = L.geoJSON(GEO, {
+    style: f => {
+      const n = f.properties.name || '';
+      const urb = n.indexOf('Tosagua') >= 0 || n.indexOf('Estancilla') >= 0 || n === 'Bachillero';
+      return { color: urb ? '#2D5016' : '#556B2F', weight: urb ? 2 : 1.5, opacity: .6, fillColor: urb ? '#A8D08D' : '#D4E0B0', fillOpacity: urb ? .2 : .12, dashArray: urb ? null : '5,5' };
+    },
+    onEachFeature: (f, ly) => {
+      const n = f.properties.name || '';
+      if (showLabels && n) {
+        const area = f.properties.area_ha || 100;
+        const m = L.marker([f.properties.cy, f.properties.cx], {
+          icon: L.divIcon({ className: 'com-label', html: n, iconSize: [1,1], iconAnchor: [0,0] }),
+          interactive: false
+        });
+        m._comArea = area;
+        m._comName = n;
+        m.addTo(mapObj);
+        labelMarkers.push(m);
+      }
+      if (interactive) {
+        ly.on('click', function() {
+          if (selectedLayer) layer.resetStyle(selectedLayer);
+          this.setStyle({ fillColor: '#D4A843', fillOpacity: .45 });
+          selectedLayer = this;
+          const count = countMilitantesInCom(f);
+          ly.bindPopup(`<div class="com-popup"><div class="com-popup-name">${n}</div><div class="com-popup-stat">Militantes registrados:<span class="com-popup-count">${count}</span>${f.properties.area_ha} hectáreas</div></div>`, { maxWidth: 220 }).openPopup();
+        });
+        ly.on('popupclose', function() {
+          if (selectedLayer) { layer.resetStyle(selectedLayer); selectedLayer = null; }
         });
       }
+    }
+  }).addTo(mapObj);
 
-      // Show success
-      document.getElementById('formCard').style.display = 'none';
-      document.getElementById('successScreen').classList.add('visible');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (showLabels) {
+    function updateLabels() {
+      const z = mapObj.getZoom();
+      const base = Math.min(Math.max(Math.round((z - 10) * 3.2), 5), 18);
+      const minArea = z <= 11 ? 800 : z <= 12 ? 400 : z <= 13 ? 150 : 0;
+      labelMarkers.forEach(m => {
+        const el = m.getElement();
+        if (!el) return;
+        if (m._comArea < minArea) { el.style.display = 'none'; return; }
+        el.style.display = '';
+        const areaBonus = Math.min(Math.sqrt(m._comArea) / 25, 4);
+        const fs = Math.round(base + areaBonus);
+        el.style.fontSize = fs + 'px';
+        const tw = m._comName.length * fs * 0.55;
+        el.style.width = tw + 'px';
+        el.style.marginLeft = (-tw / 2) + 'px';
+        el.style.marginTop = (-fs / 2) + 'px';
+      });
+    }
+    mapObj.on('zoomend', updateLabels);
+    mapObj.whenReady(() => setTimeout(updateLabels, 300));
+  }
+  return layer;
+}
 
-    } catch (err) {
-      const banner = document.getElementById('errorBanner');
-      banner.textContent = 'Hubo un error al enviar. Verifique su conexión a internet e intente de nuevo.';
-      banner.classList.add('visible');
-      btn.disabled = false;
-      btn.innerHTML = 'Enviar registro';
+// Count militantes inside a community polygon
+function countMilitantesInCom(feature) {
+  if (!viewData || viewData.length === 0) return 0;
+  let count = 0;
+  const poly = feature.geometry;
+  viewData.forEach(m => {
+    if (m.la !== null && m.ln !== null && pointInPoly([m.ln, m.la], poly)) count++;
+  });
+  return count;
+}
+
+function pointInPoly(point, geometry) {
+  const coords = geometry.type === 'MultiPolygon' ? geometry.coordinates : [geometry.coordinates];
+  for (const polygon of coords) {
+    if (pipRing(point, polygon[0])) return true;
+  }
+  return false;
+}
+
+function pipRing(point, ring) {
+  let inside = false;
+  const x = point[0], y = point[1];
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0], yi = ring[i][1];
+    const xj = ring[j][0], yj = ring[j][1];
+    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+// ══════════════════════════════════════════
+// REGISTRO — Form logic
+// ══════════════════════════════════════════
+let lat = null, lng = null;
+let regMap = null, regMarker = null;
+
+function selectRadio(el) {
+  document.querySelectorAll('.radio-option').forEach(r => r.classList.remove('selected'));
+  el.classList.add('selected');
+  el.querySelector('input').checked = true;
+}
+
+// Populate community dropdown
+const comNames = GEO.features.map(f => f.properties.name).filter(Boolean).sort();
+
+function geoMode(mode, btn) {
+  document.querySelectorAll('.geo-tab').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('geoAuto').style.display = mode === 'auto' ? 'block' : 'none';
+  document.getElementById('geoManual').style.display = mode === 'manual' ? 'block' : 'none';
+  const mc = document.getElementById('map-container');
+  if (mode === 'manual') {
+    mc.classList.add('visible');
+    document.getElementById('btnFullscreen').style.display = 'block';
+    if (!regMap) initRegMap();
+    else regMap.invalidateSize();
+    document.getElementById('mapHint').style.display = 'block';
+  } else {
+    if (!lat) { mc.classList.remove('visible'); document.getElementById('mapHint').style.display = 'none'; }
+    document.getElementById('btnFullscreen').style.display = lat ? 'block' : 'none';
+  }
+}
+
+let regComLayer = null;
+let regSelectedLayer = null;
+let regSelectedFeature = null;
+function initRegMap() {
+  regMap = L.map('map', { center: [-0.78, -80.23], zoom: 12 });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(regMap);
+  regComLayer = L.geoJSON(GEO, {
+    style: f => {
+      const n = f.properties.name || '';
+      const urb = n.indexOf('Tosagua') >= 0 || n.indexOf('Estancilla') >= 0 || n === 'Bachillero';
+      return { color: urb ? '#2D5016' : '#556B2F', weight: urb ? 2 : 1.5, opacity: .6, fillColor: urb ? '#A8D08D' : '#D4E0B0', fillOpacity: urb ? .2 : .12, dashArray: urb ? null : '5,5' };
+    },
+    onEachFeature: (f, ly) => {
+      const n = f.properties.name || '';
+      if (n) {
+        const area = f.properties.area_ha || 100;
+        const m = L.marker([f.properties.cy, f.properties.cx], {
+          icon: L.divIcon({ className: 'com-label', html: n, iconSize: [1,1], iconAnchor: [0,0] }),
+          interactive: false
+        });
+        m._comArea = area; m._comName = n;
+        m.addTo(regMap);
+        regLabelMarkers.push(m);
+      }
+      ly.on('click', function(e) {
+        // If this polygon is already selected, place marker here
+        if (regSelectedLayer === this) {
+          placeRegMarker(e.latlng.lat, e.latlng.lng);
+          return;
+        }
+        // Otherwise select this polygon, highlight and zoom
+        L.DomEvent.stopPropagation(e);
+        if (regSelectedLayer) regComLayer.resetStyle(regSelectedLayer);
+        this.setStyle({ fillColor: '#D4A843', fillOpacity: .35 });
+        regSelectedLayer = this;
+        regSelectedFeature = f;
+        regMap.fitBounds(ly.getBounds().pad(0.15));
+        document.getElementById('mapHint').innerHTML = 'Toque el punto exacto de su vivienda dentro de <b>' + n + '</b>';
+        document.getElementById('mapHint').style.display = 'block';
+      });
+    }
+  }).addTo(regMap);
+
+  // Labels zoom adaptation
+  function updateRegLabels() {
+    const z = regMap.getZoom();
+    const base = Math.min(Math.max(Math.round((z - 10) * 3.2), 5), 18);
+    const minArea = z <= 11 ? 800 : z <= 12 ? 400 : z <= 13 ? 150 : 0;
+    regLabelMarkers.forEach(m => {
+      const el = m.getElement(); if (!el) return;
+      if (m._comArea < minArea) { el.style.display = 'none'; return; }
+      el.style.display = '';
+      const fs = Math.round(base + Math.min(Math.sqrt(m._comArea) / 25, 4));
+      el.style.fontSize = fs + 'px';
+      const tw = m._comName.length * fs * 0.55;
+      el.style.width = tw + 'px';
+      el.style.marginLeft = (-tw / 2) + 'px';
+      el.style.marginTop = (-fs / 2) + 'px';
+    });
+  }
+  regMap.on('zoomend', updateRegLabels);
+  setTimeout(updateRegLabels, 300);
+
+  // Click on map (not on polygon) = place marker if a polygon is selected
+  regMap.on('click', function(e) {
+    if (regSelectedFeature) {
+      placeRegMarker(e.latlng.lat, e.latlng.lng);
     }
   });
+
+  setTimeout(() => regMap.invalidateSize(), 200);
+}
+let regLabelMarkers = [];
+
+function placeRegMarker(newLat, newLng) {
+  lat = newLat; lng = newLng;
+  if (regMarker) regMap.removeLayer(regMarker);
+  regMarker = L.marker([lat, lng], {
+    icon: L.divIcon({ className: '', html: '<div style="background:var(--verde-medio);width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4)"></div>', iconSize: [16, 16], iconAnchor: [8, 8] })
+  }).addTo(regMap);
+  document.getElementById('geoStatus').classList.add('visible');
+  document.getElementById('geoCoords').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
+  document.getElementById('geoSection').classList.add('located');
+  document.getElementById('mapHint').style.display = 'none';
+  document.getElementById('btnFullscreen').style.display = 'block';
+}
+
+// ── Fullscreen map ──
+let fullMap = null, fullMarker = null, fullLat = null, fullLng = null;
+
+function openFullMap() {
+  const ov = document.getElementById('fullMapOverlay');
+  ov.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+
+  if (!fullMap) {
+    fullMap = L.map('fullMap', { center: [-0.78, -80.23], zoom: 12 });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(fullMap);
+    let fullSelectedLayer = null;
+    let fullSelectedFeature = null;
+    let fullLabelMarkers = [];
+
+    const fullComLayer = L.geoJSON(GEO, {
+      style: f => {
+        const n = f.properties.name || '';
+        const urb = n.indexOf('Tosagua') >= 0 || n.indexOf('Estancilla') >= 0 || n === 'Bachillero';
+        return { color: urb ? '#2D5016' : '#556B2F', weight: urb ? 2 : 1.5, opacity: .6, fillColor: urb ? '#A8D08D' : '#D4E0B0', fillOpacity: urb ? .2 : .12, dashArray: urb ? null : '5,5' };
+      },
+      onEachFeature: (f, ly) => {
+        const n = f.properties.name || '';
+        if (n) {
+          const area = f.properties.area_ha || 100;
+          const lm = L.marker([f.properties.cy, f.properties.cx], {
+            icon: L.divIcon({ className: 'com-label', html: n, iconSize: [1,1], iconAnchor: [0,0] }),
+            interactive: false
+          });
+          lm._comArea = area; lm._comName = n;
+          lm.addTo(fullMap);
+          fullLabelMarkers.push(lm);
+        }
+        ly.on('click', function(e) {
+          if (fullSelectedLayer === this) {
+            placeFullMarker(e.latlng.lat, e.latlng.lng);
+            return;
+          }
+          L.DomEvent.stopPropagation(e);
+          if (fullSelectedLayer) fullComLayer.resetStyle(fullSelectedLayer);
+          this.setStyle({ fillColor: '#D4A843', fillOpacity: .35 });
+          fullSelectedLayer = this;
+          fullSelectedFeature = f;
+          fullMap.fitBounds(ly.getBounds().pad(0.15));
+          document.getElementById('fullMapStatus').textContent = 'Toque el punto exacto de su vivienda dentro de ' + n;
+        });
+      }
+    }).addTo(fullMap);
+
+    function updateFullLabels() {
+      const z = fullMap.getZoom();
+      const base = Math.min(Math.max(Math.round((z - 10) * 3.2), 5), 18);
+      const minArea = z <= 11 ? 800 : z <= 12 ? 400 : z <= 13 ? 150 : 0;
+      fullLabelMarkers.forEach(m => {
+        const el = m.getElement(); if (!el) return;
+        if (m._comArea < minArea) { el.style.display = 'none'; return; }
+        el.style.display = '';
+        const fs = Math.round(base + Math.min(Math.sqrt(m._comArea) / 25, 4));
+        el.style.fontSize = fs + 'px';
+        const tw = m._comName.length * fs * 0.55;
+        el.style.width = tw + 'px';
+        el.style.marginLeft = (-tw / 2) + 'px';
+        el.style.marginTop = (-fs / 2) + 'px';
+      });
+    }
+    fullMap.on('zoomend', updateFullLabels);
+    setTimeout(updateFullLabels, 300);
+
+    fullMap.on('click', function(e) {
+      if (fullSelectedFeature) {
+        placeFullMarker(e.latlng.lat, e.latlng.lng);
+      }
+    });
+  }
+
+  function placeFullMarker(fLa, fLn) {
+    fullLat = fLa; fullLng = fLn;
+    if (fullMarker) fullMap.removeLayer(fullMarker);
+    fullMarker = L.marker([fullLat, fullLng], {
+      icon: L.divIcon({ className: '', html: '<div style="background:var(--verde-medio);width:18px;height:18px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)"></div>', iconSize: [18, 18], iconAnchor: [9, 9] })
+    }).addTo(fullMap);
+    document.getElementById('fullMapCoords').textContent = fullLat.toFixed(6) + ', ' + fullLng.toFixed(6);
+    document.getElementById('fullMapStatus').textContent = 'Ubicación seleccionada';
+    const btn = document.getElementById('fullMapAccept');
+    btn.disabled = false; btn.style.opacity = '1';
+  }
+
+  // Sync position from small map
+  if (lat && lng) {
+    fullMap.setView([lat, lng], regMap ? regMap.getZoom() : 14);
+    fullLat = lat; fullLng = lng;
+    if (fullMarker) fullMap.removeLayer(fullMarker);
+    fullMarker = L.marker([lat, lng], {
+      icon: L.divIcon({ className: '', html: '<div style="background:var(--verde-medio);width:18px;height:18px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)"></div>', iconSize: [18, 18], iconAnchor: [9, 9] })
+    }).addTo(fullMap);
+    document.getElementById('fullMapCoords').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
+    document.getElementById('fullMapStatus').textContent = 'Ubicación seleccionada';
+    const btn = document.getElementById('fullMapAccept');
+    btn.disabled = false; btn.style.opacity = '1';
+  } else {
+    fullMap.fitBounds(L.geoJSON(GEO).getBounds().pad(0.05));
+  }
+  setTimeout(() => fullMap.invalidateSize(), 150);
+}
+
+function closeFullMap() {
+  document.getElementById('fullMapOverlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function acceptFullMap() {
+  if (fullLat === null) return;
+  lat = fullLat; lng = fullLng;
+  // Sync back to small map
+  if (regMap) {
+    if (regMarker) regMap.removeLayer(regMarker);
+    regMarker = L.marker([lat, lng], {
+      icon: L.divIcon({ className: '', html: '<div style="background:var(--verde-medio);width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4)"></div>', iconSize: [16, 16], iconAnchor: [8, 8] })
+    }).addTo(regMap);
+    regMap.setView([lat, lng], 15);
+  }
+  document.getElementById('geoStatus').classList.add('visible');
+  document.getElementById('geoCoords').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
+  document.getElementById('geoSection').classList.add('located');
+  document.getElementById('mapHint').style.display = 'none';
+  closeFullMap();
+}
+
+function getLocation() {
+  const btn = document.getElementById('btnGeo');
+  if (!navigator.geolocation) { alert('Su navegador no soporta geolocalización.'); return; }
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Obteniendo ubicación...';
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      lat = pos.coords.latitude; lng = pos.coords.longitude;
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 7 12 8 12s8-6.6 8-12a8 8 0 0 0-8-8z"/></svg> Actualizar ubicación';
+      btn.disabled = false;
+      document.getElementById('geoStatus').classList.add('visible');
+      document.getElementById('geoCoords').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
+      document.getElementById('geoSection').classList.add('located');
+      const mc = document.getElementById('map-container'); mc.classList.add('visible');
+      if (!regMap) initRegMap(); else regMap.invalidateSize();
+      if (regMarker) regMap.removeLayer(regMarker);
+      regMarker = L.marker([lat, lng], { icon: L.divIcon({ className: '', html: '<div style="background:var(--verde-medio);width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4)"></div>', iconSize: [16, 16], iconAnchor: [8, 8] }) }).addTo(regMap);
+      regMap.setView([lat, lng], 15);
+      document.getElementById('mapHint').style.display = 'none';
+      document.getElementById('btnFullscreen').style.display = 'block';
+    },
+    err => {
+      btn.disabled = false;
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 7 12 8 12s8-6.6 8-12a8 8 0 0 0-8-8z"/></svg> Registrar mi ubicación actual';
+      alert(err.code === 1 ? 'Permiso de ubicación denegado. Habilite el GPS.' : 'No se pudo obtener la ubicación.');
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
+}
+
+function validateField(id, cond) { const el = document.getElementById(id); if (!cond) { el.classList.add('error'); return false; } el.classList.remove('error'); return true; }
+
+document.getElementById('registroForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const nombres = document.getElementById('nombres').value.trim();
+  const cedula = document.getElementById('cedula').value.trim();
+  const celular = document.getElementById('celular').value.trim();
+  const edad = document.getElementById('edad').value.trim();
+  const parroquia = document.querySelector('input[name="parroquia"]:checked');
+  const direccion = document.getElementById('direccion').value.trim();
+
+  let valid = true;
+  valid = validateField('nombres', nombres.length >= 5) && valid;
+  valid = validateField('cedula', /^\d{10}$/.test(cedula)) && valid;
+  valid = validateField('celular', /^0\d{9}$/.test(celular)) && valid;
+  valid = validateField('edad', edad && parseInt(edad) >= 16 && parseInt(edad) <= 110) && valid;
+  valid = validateField('direccion', direccion.length >= 3) && valid;
+  if (!parroquia) { document.getElementById('parroquiaGroup').style.outline = '2px solid var(--danger)'; document.getElementById('parroquiaGroup').style.borderRadius = '10px'; valid = false; }
+  else { document.getElementById('parroquiaGroup').style.outline = 'none'; }
+  if (lat === null || lng === null) { document.getElementById('geoSection').style.outline = '2px solid var(--danger)'; document.getElementById('geoSection').style.borderRadius = '12px'; document.getElementById('geoSection').scrollIntoView({ behavior: 'smooth', block: 'center' }); valid = false; }
+  else { document.getElementById('geoSection').style.outline = 'none'; }
+  if (!valid) return;
+
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Enviando...';
+
+  const data = { nombres, cedula, celular, edad: parseInt(edad), parroquia: parroquia.value, direccion, latitud: lat.toFixed(6), longitud: lng.toFixed(6), fecha_registro: new Date().toLocaleString('es-EC', { timeZone: 'America/Guayaquil' }) };
+
+  try {
+    await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    document.getElementById('formCard').style.display = 'none';
+    document.getElementById('successScreen').classList.add('visible');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err) {
+    const b = document.getElementById('errorBanner'); b.textContent = 'Error al enviar. Verifique su conexión.'; b.classList.add('visible');
+    btn.disabled = false; btn.innerHTML = 'Enviar registro';
+  }
+});
+
+// ══════════════════════════════════════════
+// MAPA VIEWER
+// ══════════════════════════════════════════
+let viewMap = null, viewCluster = null, viewData = [], mapUnlocked = false;
+
+function unlock() {
+  if (document.getElementById('lockPw').value === MAP_PASS) {
+    document.getElementById('mapLock').style.display = 'none';
+    document.getElementById('viewStats').classList.add('vis');
+    document.getElementById('viewMap').classList.add('vis');
+    mapUnlocked = true;
+    if (!viewMap) initViewMap();
+    loadMilitantes();
+  } else { document.getElementById('lockErr').style.display = 'block'; document.getElementById('lockPw').value = ''; }
+}
+
+function initViewMap() {
+  viewMap = L.map('viewMap', { center: [-0.78, -80.23], zoom: 12 });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(viewMap);
+  const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18 });
+  const topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17 });
+  const cl = makeComLayer(viewMap, { labels: true, interactive: true });
+  L.control.layers({ "Mapa": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(viewMap), "Satélite": sat, "Topográfico": topo }, { "Comunidades": cl }, { position: 'topright', collapsed: true }).addTo(viewMap);
+  viewMap.fitBounds(cl.getBounds().pad(.05));
+  viewCluster = L.markerClusterGroup({ maxClusterRadius: 35, showCoverageOnHover: false,
+    iconCreateFunction: c => { const n = c.getChildCount(), d = n > 20 ? 48 : n > 10 ? 42 : 36;
+      return L.divIcon({ html: `<div style="background:var(--verde-oscuro);color:#fff;width:${d}px;height:${d}px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'DM Sans';font-size:${n>99?11:13}px;font-weight:700;border:3px solid var(--dorado);box-shadow:0 2px 8px rgba(0,0,0,.25)">${n}</div>`, className: '', iconSize: [d, d] }); }
+  });
+  const leg = L.control({ position: 'bottomleft' });
+  leg.onAdd = function() { const d = L.DomUtil.create('div', 'legend'); d.innerHTML = '<div class="legend-t">Leyenda</div><div class="legend-i"><div class="legend-sw" style="background:#2196F3"></div> Hombre</div><div class="legend-i"><div class="legend-sw" style="background:#E91E63"></div> Mujer</div><div class="legend-i" style="margin-top:3px"><div class="legend-ln" style="background:#D4E0B0"></div> Comunidades</div><div class="legend-i"><div class="legend-ln" style="background:#D4A843"></div> Seleccionada</div>'; return d; };
+  leg.addTo(viewMap);
+  setTimeout(() => viewMap.invalidateSize(), 200);
+}
+
+const FEM=new Set(['maria','mayra','stefania','julitza','maryury','tatiana','carmen','genesis','diana','monica','milena','jessica','josselyn','karen','gema','angela','martha','erika','virginia','anita','dolores','jacqueline','iris','merly','laura','neyra','julexy','ashley','keyla','graviela','jennifer','nicolle','lizeth','dayana','lucia','gabriela','juana','rosa','yovana','luby','tanyita','asuncion','hilda','jelitza','yanina','anny','heydee','cinthia','cinthya','kenia','brithany','frella','hailys','ofelia','denisse','catiusca','julexi','mariony','maryuri','ruth','elena','denesis','narcisa','ramona','karoline','stephanie','teresa','joselyn','andrea','cecibel','raquel','patricia','elizabeth','isabela','katherine','alexandra','adriana','alejandra','ana','beatriz','carolina','cristina','daniela','estefania','fernanda','gloria','isabel','josefina','lorena','margarita','natalia','paola','silvia','valeria','ximena','yesenia','nohelia','madelaine','ivana','damaris','evelyn']);
+const MASC=new Set(['yony','jose','cesar','cano','favio','joaquin','david','carlos','diego','victor','frank','angel','jesus','jean','julio','jhonny','darwin','juan','alex','mervin','italo','pavel','eddy','ricardo','paul','geovanny','andres','jonny','genner','anderson','steeven','steven','gustavo','orley','bryan','christian','marlon','saul','fernando','rafael','ronny','joel','francisco','luis','michael','tomas','junnax','nestor','freddy','mario','angelo','lider','irvin','ruben','washington','pablo','neisser','javier','hector','roberto','roberth','daniel','john','manuel','miguel','henry','pedro','edison','arquimedes','robinson','jericson','jordy','elvis','yeremy','guillermo','stalin','moncerrate','wellington','xavier']);
+function gx(n){if(!n)return'?';const p=n.toLowerCase().replace(/[.,]/g,' ').split(/\s+/);for(let i=0;i<Math.min(p.length,4);i++){if(FEM.has(p[i]))return'f';if(MASC.has(p[i]))return'm'}return'?'}
+function ar(a){if(!a||a<1)return'—';if(a<=25)return'17-25';if(a<=35)return'26-35';if(a<=45)return'36-45';if(a<=55)return'46-55';if(a<=65)return'56-65';return'65+'}
+
+function vMk(m){
+  const bg=m.g==='m'?'#2196F3':m.g==='f'?'#E91E63':'#9E9E9E';
+  const mk=L.marker([m.la,m.ln],{icon:L.divIcon({className:'',html:`<div style="background:${bg};width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3)"></div>`,iconSize:[12,12],iconAnchor:[6,6]})});
+  const gb=m.g==='m'?'<span class="gbm">Masculino</span>':m.g==='f'?'<span class="gbf">Femenino</span>':'—';
+  mk.bindPopup(`<div><div class="ph"><div class="pn">${m.n}</div><div class="ppq">${m.p}</div></div><div class="pbdy"><div class="prw"><span class="plb">Cédula</span><span class="pvl">${m.c}</span></div><div class="prw"><span class="plb">Celular</span><span class="pvl">${m.t}</span></div><div class="prw"><span class="plb">Edad</span><span class="pvl">${m.e} años (${ar(m.e)})</span></div><div class="prw"><span class="plb">Género</span><span class="pvl">${gb}</span></div><div class="prw"><span class="plb">Dirección</span><span class="pvl">${m.d}</span></div><div class="prw"><span class="plb">Registro</span><span class="pvl">${m.f}</span></div><div class="pco">${m.la.toFixed(6)}, ${m.ln.toFixed(6)}</div><a href="https://www.google.com/maps?q=${m.la},${m.ln}" target="_blank" class="pml">Abrir en Google Maps</a></div></div>`,{maxWidth:280,minWidth:260});
+  return mk;
+}
+function vRender(f){viewCluster.clearLayers();viewData.filter(m=>m.la!==null).forEach(m=>{if(f==='a'||(f==='m'&&m.g==='m')||(f==='f'&&m.g==='f'))viewCluster.addLayer(vMk(m))});viewMap.addLayer(viewCluster)}
+function vFlt(t,btn){document.querySelectorAll('.fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');vRender(t)}
+
+function loadMilitantes(){
+  if(MAP_API==='https://script.google.com/macros/s/AKfycbzKQTTkEhU7N-tIFCOAe2IQ2nCPMr_b0SxVtxNPujzftjOeE_qpsyeSECY3awmgQDiz/exec')return;
+  fetch(MAP_API).then(r=>r.json()).then(data=>{
+    if(data.error)throw new Error(data.error);
+    let nM=0,nF=0,nG=0;viewData=[];
+    data.militantes.forEach(m=>{m.g=gx(m.n);if(m.g==='m')nM++;else if(m.g==='f')nF++;if(m.la!==null)nG++;viewData.push(m)});
+    document.getElementById('v3').textContent=data.total;document.getElementById('v1').textContent=nM;
+    document.getElementById('v2').textContent=nF;
+    vRender('a');
+    const gps=viewData.filter(m=>m.la!==null);
+    if(gps.length>0)viewMap.fitBounds(L.latLngBounds(gps.map(m=>[m.la,m.ln])).pad(.15));
+  }).catch(e=>console.error('Error:',e));
+}
+
+function refreshMap(){
+  const btn=document.getElementById('btnRefresh');
+  btn.textContent='Cargando...';btn.disabled=true;
+  viewData=[];
+  loadMilitantes();
+  setTimeout(()=>{btn.textContent='↻ Actualizar';btn.disabled=false},2000);
+}
+
+function purgeConfirm(){
+  document.getElementById('purgeBar').style.display='flex';
+  document.getElementById('purgeResult').textContent='';
+}
+function cancelPurge(){
+  document.getElementById('purgeBar').style.display='none';
+}
+function executePurge(){
+  if(MAP_API==='https://script.google.com/macros/s/AKfycbzKQTTkEhU7N-tIFCOAe2IQ2nCPMr_b0SxVtxNPujzftjOeE_qpsyeSECY3awmgQDiz/exec')return;
+  const btn=document.querySelector('#purgeBar button');
+  btn.textContent='Purgando...';btn.disabled=true;
+  fetch(MAP_API+'?action=purge').then(r=>r.json()).then(data=>{
+    btn.textContent='Sí, purgar ahora';btn.disabled=false;
+    if(data.status==='ok'){
+      document.getElementById('purgeResult').textContent='✓ '+data.message;
+      setTimeout(()=>{
+        document.getElementById('purgeBar').style.display='none';
+        refreshMap();
+      },3000);
+    } else {
+      document.getElementById('purgeResult').textContent='Error: '+(data.message||'desconocido');
+    }
+  }).catch(e=>{
+    btn.textContent='Sí, purgar ahora';btn.disabled=false;
+    document.getElementById('purgeResult').textContent='Error de conexión';
+  });
+}
 </script>
 </body>
 </html>
