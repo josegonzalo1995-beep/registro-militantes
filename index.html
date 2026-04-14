@@ -293,7 +293,7 @@
 // CONFIGURACIÓN
 // ═══════════════════════════════════════════════════
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzKQTTkEhU7N-tIFCOAe2IQ2nCPMr_b0SxVtxNPujzftjOeE_qpsyeSECY3awmgQDiz/exec';
-const MAP_API = 'PEGAR_MAP_API_AQUI';
+const MAP_API = 'https://script.google.com/macros/s/AKfycbzKQTTkEhU7N-tIFCOAe2IQ2nCPMr_b0SxVtxNPujzftjOeE_qpsyeSECY3awmgQDiz/exec';
 const MAP_PASS = 'bernabe2027';
 // ═══════════════════════════════════════════════════
 
@@ -790,7 +790,7 @@ function vRender(f){viewCluster.clearLayers();viewData.filter(m=>m.la!==null).fo
 function vFlt(t,btn){document.querySelectorAll('.fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');vRender(t)}
 
 function loadMilitantes(){
-  if(MAP_API==='https://script.google.com/macros/s/AKfycbzKQTTkEhU7N-tIFCOAe2IQ2nCPMr_b0SxVtxNPujzftjOeE_qpsyeSECY3awmgQDiz/exec')return;
+  if(MAP_API==='PEGAR_MAP_API_AQUI')return;
   fetch(MAP_API).then(r=>r.json()).then(data=>{
     if(data.error)throw new Error(data.error);
     let nM=0,nF=0,nG=0;viewData=[];
@@ -819,7 +819,7 @@ function cancelPurge(){
   document.getElementById('purgeBar').style.display='none';
 }
 function executePurge(){
-  if(MAP_API==='https://script.google.com/macros/s/AKfycbzKQTTkEhU7N-tIFCOAe2IQ2nCPMr_b0SxVtxNPujzftjOeE_qpsyeSECY3awmgQDiz/exec')return;
+  if(MAP_API==='PEGAR_MAP_API_AQUI')return;
   const btn=document.querySelector('#purgeBar button');
   btn.textContent='Purgando...';btn.disabled=true;
   fetch(MAP_API+'?action=purge').then(r=>r.json()).then(data=>{
