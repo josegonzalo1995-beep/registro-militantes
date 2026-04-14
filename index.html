@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Registro de Militantes – El Plan de la Gente</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
@@ -783,7 +786,7 @@ function vMk(m){
   const bg=m.g==='m'?'#2196F3':m.g==='f'?'#E91E63':'#9E9E9E';
   const mk=L.marker([m.la,m.ln],{icon:L.divIcon({className:'',html:`<div style="background:${bg};width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3)"></div>`,iconSize:[12,12],iconAnchor:[6,6]})});
   const gb=m.g==='m'?'<span class="gbm">Masculino</span>':m.g==='f'?'<span class="gbf">Femenino</span>':'—';
-  mk.bindPopup(`<div><div class="ph"><div class="pn">${m.n}</div><div class="ppq">${m.p}</div></div><div class="pbdy"><div class="prw"><span class="plb">Cédula</span><span class="pvl">${m.c}</span></div><div class="prw"><span class="plb">Celular</span><span class="pvl">${m.t}</span></div><div class="prw"><span class="plb">Edad</span><span class="pvl">${m.e} años (${ar(m.e)})</span></div><div class="prw"><span class="plb">Género</span><span class="pvl">${gb}</span></div><div class="prw"><span class="plb">Dirección</span><span class="pvl">${m.d}</span></div><div class="prw"><span class="plb">Registro</span><span class="pvl">${m.f}</span></div><div class="pco">${m.la.toFixed(6)}, ${m.ln.toFixed(6)}</div><a href="https://www.google.com/maps?q=${m.la},${m.ln}" target="_blank" class="pml">Abrir en Google Maps</a></div></div>`,{maxWidth:280,minWidth:260});
+  mk.bindPopup(`<div><div class="ph"><div class="pn">${m.n}</div><div class="ppq">${m.p}</div></div><div class="pbdy"><div class="prw"><span class="plb">Celular</span><span class="pvl">${m.t}</span></div><div class="prw"><span class="plb">Edad</span><span class="pvl">${m.e} años (${ar(m.e)})</span></div><div class="prw"><span class="plb">Género</span><span class="pvl">${gb}</span></div><div class="prw"><span class="plb">Dirección</span><span class="pvl">${m.d}</span></div><div class="prw"><span class="plb">Registro</span><span class="pvl">${m.f}</span></div><div class="pco">${m.la.toFixed(6)}, ${m.ln.toFixed(6)}</div><a href="https://www.google.com/maps?q=${m.la},${m.ln}" target="_blank" class="pml">Abrir en Google Maps</a></div></div>`,{maxWidth:280,minWidth:260});
   return mk;
 }
 function vRender(f){viewCluster.clearLayers();viewData.filter(m=>m.la!==null).forEach(m=>{if(f==='a'||(f==='m'&&m.g==='m')||(f==='f'&&m.g==='f'))viewCluster.addLayer(vMk(m))});viewMap.addLayer(viewCluster)}
@@ -791,7 +794,7 @@ function vFlt(t,btn){document.querySelectorAll('.fb').forEach(b=>b.classList.rem
 
 function loadMilitantes(){
   if(MAP_API==='PEGAR_MAP_API_AQUI')return;
-  fetch(MAP_API).then(r=>r.json()).then(data=>{
+  fetch(MAP_API+'?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(data=>{
     if(data.error)throw new Error(data.error);
     let nM=0,nF=0,nG=0;viewData=[];
     data.militantes.forEach(m=>{m.g=gx(m.n);if(m.g==='m')nM++;else if(m.g==='f')nF++;if(m.la!==null)nG++;viewData.push(m)});
@@ -822,7 +825,7 @@ function executePurge(){
   if(MAP_API==='PEGAR_MAP_API_AQUI')return;
   const btn=document.querySelector('#purgeBar button');
   btn.textContent='Purgando...';btn.disabled=true;
-  fetch(MAP_API+'?action=purge').then(r=>r.json()).then(data=>{
+  fetch(MAP_API+'?action=purge&t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(data=>{
     btn.textContent='Sí, purgar ahora';btn.disabled=false;
     if(data.status==='ok'){
       document.getElementById('purgeResult').textContent='✓ '+data.message;
